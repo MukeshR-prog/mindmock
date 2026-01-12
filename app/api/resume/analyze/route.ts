@@ -1,0 +1,67 @@
+import { NextResponse } from "next/server";
+import { connectDB } from "@/config/mongodb";
+import Resume from "@/models/Resume";
+import User from "@/models/User";
+import mammoth from "mammoth";
+import { calculateATS } from "@/utils/ats";
+
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+
+    const formData = await req.formData();
+    const file = formData.get("resume") as File;
+    const jobDescription = formData.get("jobDescription") as string;
+    const firebaseUid = formData.get("firebaseUid") as string;
+
+    if (!file || !jobDescription || !firebaseUid) {
+      return NextResponse.json(
+        { error: "Missing fields" },
+        { status: 400 }
+      );
+    }
+
+    // ❌ Only DOCX for Day 3
+    if (!file.name.toLowerCase().endsWith(".docx")) {
+      return NextResponse.json(
+        { error: "Only .docx resumes are supported for now" },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findOne({ firebaseUid });
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // 🧠 Extract text from DOCX
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const result = await mammoth.extractRawText({ buffer });
+    const resumeText = result.value;
+
+    // 🔍 ATS analysis
+    const atsResult = calculateATS(resumeText, jobDescription);
+
+    // 💾 Save to DB
+    const resume = await Resume.create({
+      userId: user._id,
+      fileName: file.name,
+      resumeText,
+      jobDescription,
+      atsScore: atsResult.score,
+      matchedKeywords: atsResult.matchedKeywords,
+      missingKeywords: atsResult.missingKeywords,
+    });
+
+    return NextResponse.json(resume);
+  } catch (error: any) {
+    console.error("RESUME ANALYZE ERROR 👉", error);
+    return NextResponse.json(
+      { error: "Resume analysis failed", details: error.message },
+      { status: 500 }
+    );
+  }
+}

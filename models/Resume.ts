@@ -2,10 +2,15 @@ import mongoose, { Schema, models } from "mongoose";
 
 const ResumeSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User" },
-    title: String,
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+
+    fileName: String,
+    resumeText: String,
+    jobDescription: String,
+
     atsScore: Number,
-    extractedText: String,
+    matchedKeywords: [String],
+    missingKeywords: [String],
   },
   { timestamps: true }
 );
