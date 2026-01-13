@@ -6,7 +6,13 @@ const ResumeSchema = new Schema(
 
     fileName: String,
     resumeText: String,
-    jobDescription: String,
+
+    targetRole: { type: String, required: true },
+    experienceLevel: {
+      type: String,
+      enum: ["fresher", "junior", "mid", "senior"],
+      required: true,
+    },
 
     atsScore: Number,
     matchedKeywords: [String],

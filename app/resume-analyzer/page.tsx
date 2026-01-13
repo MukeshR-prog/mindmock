@@ -4,13 +4,18 @@ import { useAuthStore } from "@/store/authStore";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Input, Textarea } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
 import { useState } from "react";
 
 export default function ResumeAnalyzerPage() {
   const { user } = useAuthStore();
 
+  // ✅ REQUIRED STATES (YOU WERE MISSING THESE)
   const [file, setFile] = useState<File | null>(null);
   const [jd, setJd] = useState("");
+  const [role, setRole] = useState<string>("frontend");
+  const [experience, setExperience] = useState<string>("fresher");
+
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +28,8 @@ export default function ResumeAnalyzerPage() {
     formData.append("resume", file);
     formData.append("jobDescription", jd);
     formData.append("firebaseUid", user.uid);
+    formData.append("targetRole", role);
+    formData.append("experienceLevel", experience);
 
     const res = await fetch("/api/resume/analyze", {
       method: "POST",
@@ -44,7 +51,8 @@ export default function ResumeAnalyzerPage() {
         <CardBody className="space-y-4">
           <Input
             type="file"
-            accept=".pdf,.docx"
+            accept=".docx"
+            description="Only DOCX resumes supported"
             onChange={(e) =>
               setFile(e.target.files?.[0] || null)
             }
@@ -53,8 +61,44 @@ export default function ResumeAnalyzerPage() {
           <Textarea
             label="Job Description"
             minRows={6}
+            value={jd}
             onChange={(e) => setJd(e.target.value)}
           />
+
+          {/* ✅ TARGET ROLE */}
+          <Select
+            label="Target Role"
+            selectedKeys={[role]}
+            onSelectionChange={(keys) => {
+              const value = Array.from(keys)[0] as string;
+              setRole(value);
+            }}
+          >
+            <SelectItem key="frontend">
+              Frontend Developer
+            </SelectItem>
+            <SelectItem key="backend">
+              Backend Developer
+            </SelectItem>
+            <SelectItem key="fullstack">
+              Full Stack Developer
+            </SelectItem>
+          </Select>
+
+          {/* ✅ EXPERIENCE LEVEL */}
+          <Select
+            label="Experience Level"
+            selectedKeys={[experience]}
+            onSelectionChange={(keys) => {
+              const value = Array.from(keys)[0] as string;
+              setExperience(value);
+            }}
+          >
+            <SelectItem key="fresher">Fresher</SelectItem>
+            <SelectItem key="junior">0–2 Years</SelectItem>
+            <SelectItem key="mid">2–5 Years</SelectItem>
+            <SelectItem key="senior">5+ Years</SelectItem>
+          </Select>
 
           <Button
             color="primary"

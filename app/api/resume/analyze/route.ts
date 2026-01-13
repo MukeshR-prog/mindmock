@@ -13,6 +13,15 @@ export async function POST(req: Request) {
     const file = formData.get("resume") as File;
     const jobDescription = formData.get("jobDescription") as string;
     const firebaseUid = formData.get("firebaseUid") as string;
+    const targetRole = formData.get("targetRole") as string;
+    const experienceLevel = formData.get("experienceLevel") as string;
+
+if (!targetRole || !experienceLevel) {
+  return NextResponse.json(
+    { error: "Missing role or experience" },
+    { status: 400 }
+  );
+}
 
     if (!file || !jobDescription || !firebaseUid) {
       return NextResponse.json(
