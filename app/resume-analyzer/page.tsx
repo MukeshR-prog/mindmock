@@ -102,7 +102,7 @@ export default function ResumeAnalyzerPage() {
 
           <Button
             color="primary"
-            onClick={analyzeResume}
+            onPress={analyzeResume}
             isLoading={loading}
           >
             Analyze Resume

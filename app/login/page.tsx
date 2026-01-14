@@ -50,11 +50,11 @@ export default function LoginPage() {
             onChange={(e:any) => setPassword(e.target.value)}
           />
 
-          <Button color="primary" onClick={handleEmailLogin}>
+          <Button color="primary" onPress={handleEmailLogin}>
             Login
           </Button>
 
-          <Button variant="bordered" onClick={handleGoogleLogin}>
+          <Button variant="bordered" onPress={handleGoogleLogin}>
             Continue with Google
           </Button>
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
           <Button
             size="sm"
             variant="light"
-            onClick={() => router.push("/forgot-password")}
+            onPress={() => router.push("/forgot-password")}
           >
             Forgot Password?
           </Button>

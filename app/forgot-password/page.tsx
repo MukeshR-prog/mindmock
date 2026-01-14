@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
             onChange={(e:any) => setEmail(e.target.value)}
           />
 
-          <Button color="primary" onClick={handleReset}>
+          <Button color="primary" onPress={handleReset}>
             Send Reset Link
           </Button>
         </CardBody>

@@ -5,10 +5,17 @@ import { useParams } from "next/navigation";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { useInterviewStore } from "@/store/interviewStore";
+import { useRouter } from "next/navigation";
 
 export default function LiveInterviewPage() {
   const { id } = useParams();
+  const router = useRouter();
+
+  // 🎙 Speech recognition instance
   const recognitionRef = useRef<any>(null);
+
+  // 🧠 Store last spoken answer for AI follow-up
+  const lastAnswerRef = useRef<string>("");
 
   const {
     setInterviewId,
@@ -21,12 +28,15 @@ export default function LiveInterviewPage() {
     stopListening,
   } = useInterviewStore();
 
-  // ✅ Fetch AI-generated question from server
-  const fetchNextQuestion = async () => {
+  // 🔥 Fetch AI-generated question from server
+  const fetchNextQuestion = async (previousAnswer?: string) => {
     const res = await fetch("/api/interviews/generate-question", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interviewId: id }),
+      body: JSON.stringify({
+        interviewId: id,
+        previousAnswer,
+      }),
     });
 
     const data = await res.json();
@@ -34,6 +44,7 @@ export default function LiveInterviewPage() {
     addTranscript(`AI: ${data.question}`);
   };
 
+  // Initial question
   useEffect(() => {
     setInterviewId(id as string);
     fetchNextQuestion();
@@ -41,7 +52,7 @@ export default function LiveInterviewPage() {
 
   const startMic = () => {
     if (!("webkitSpeechRecognition" in window)) {
-      alert("Speech recognition not supported");
+      alert("Speech recognition not supported in this browser");
       return;
     }
 
@@ -50,16 +61,21 @@ export default function LiveInterviewPage() {
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognition.onstart = () => startListening();
+    recognition.onstart = () => {
+      startListening();
+    };
 
     recognition.onresult = (event: any) => {
       const answer = event.results[0][0].transcript;
+
+      // Save answer
+      lastAnswerRef.current = answer;
       addTranscript(`You: ${answer}`);
     };
 
     recognition.onend = async () => {
       stopListening();
-      await fetchNextQuestion(); // 🔥 NEXT QUESTION
+      await fetchNextQuestion(lastAnswerRef.current);
     };
 
     recognition.start();
@@ -85,24 +101,36 @@ export default function LiveInterviewPage() {
     alert("Interview progress saved");
   };
 
+  const endInterview = async () => {
+    await fetch("/api/interviews/end", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        interviewId: id,
+        transcript,
+      }),
+    });
+
+    // Clear local interview state (optional but clean)
+    // useInterviewStore.getState().reset();
+
+    router.push("/interviews/history");
+  };
+
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">
-        Live Mock Interview
-      </h1>
+      <h1 className="text-2xl font-semibold mb-4">Live Mock Interview</h1>
 
       <Card>
         <CardBody>
-          <p className="font-medium mb-4">
-            AI: {currentQuestion}
-          </p>
+          <p className="font-medium mb-4">AI: {currentQuestion}</p>
 
           {!isListening ? (
-            <Button color="primary" onClick={startMic}>
+            <Button color="primary" onPress={startMic}>
               Answer
             </Button>
           ) : (
-            <Button color="danger" onClick={stopMic}>
+            <Button color="danger" onPress={stopMic}>
               Stop Listening
             </Button>
           )}
@@ -120,12 +148,11 @@ export default function LiveInterviewPage() {
         </CardBody>
       </Card>
 
-      <Button
-        className="mt-6"
-        variant="bordered"
-        onClick={saveProgress}
-      >
+      <Button className="mt-6" variant="bordered" onPress={saveProgress}>
         Save Progress
+      </Button>
+      <Button className="mt-4" color="danger" onPress={endInterview}>
+        End Interview
       </Button>
     </div>
   );

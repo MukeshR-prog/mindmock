@@ -100,7 +100,7 @@ export default function InterviewSetupPage() {
           <Button
             color="primary"
             isLoading={loading}
-            onClick={createInterview}
+            onPress={createInterview}
           >
             Start Interview
           </Button>

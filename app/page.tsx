@@ -40,7 +40,7 @@ export default function HomePage() {
           <Button
             color="primary"
             size="lg"
-            onClick={() => router.push("/login")}
+            onPress={() => router.push("/login")}
           >
             Start Free Mock Interview
           </Button>
@@ -48,7 +48,7 @@ export default function HomePage() {
           <Button
             variant="bordered"
             size="lg"
-            onClick={() => router.push("/login")}
+            onPress={() => router.push("/login")}
           >
             Watch Demo
           </Button>
@@ -117,7 +117,7 @@ export default function HomePage() {
         <Button
           color="primary"
           size="lg"
-          onClick={() => router.push("/login")}
+          onPress={() => router.push("/login")}
         >
           Get Started for Free
         </Button>

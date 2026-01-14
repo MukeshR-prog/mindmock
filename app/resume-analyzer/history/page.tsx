@@ -65,7 +65,7 @@ export default function ResumeHistoryPage() {
 
               <Button
                 color="primary"
-                onClick={() => {
+                onPress={() => {
                   setSelectedResume(resume);
                   router.push("/interviews/setup");
                 }}
