@@ -110,27 +110,32 @@ export default function ResumeAnalyzerPage() {
         </CardBody>
       </Card>
 
-      {result && (
-        <Card className="mt-6">
-          <CardBody>
-            <h2 className="text-xl font-semibold mb-2">
-              ATS Score: {result.atsScore} / 100
-            </h2>
+{result && result.atsScore !== undefined && (
+  <Card className="mt-6">
+    <CardBody>
+      <h2 className="text-xl font-semibold mb-2">
+        ATS Score: {result.atsScore} / 100
+      </h2>
 
-            <p className="font-medium">Missing Keywords:</p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {result.missingKeywords.map((word: string) => (
-                <span
-                  key={word}
-                  className="px-2 py-1 bg-red-100 rounded text-sm"
-                >
-                  {word}
-                </span>
-              ))}
-            </div>
-          </CardBody>
-        </Card>
+      {Array.isArray(result.missingKeywords) && (
+        <>
+          <p className="font-medium">Missing Keywords:</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {result.missingKeywords.map((word: string) => (
+              <span
+                key={word}
+                className="px-2 py-1 bg-red-100 rounded text-sm"
+              >
+                {word}
+              </span>
+            ))}
+          </div>
+        </>
       )}
+    </CardBody>
+  </Card>
+)}
+
     </div>
   );
 }

@@ -56,14 +56,16 @@ if (!targetRole || !experienceLevel) {
 
     // 💾 Save to DB
     const resume = await Resume.create({
-      userId: user._id,
-      fileName: file.name,
-      resumeText,
-      jobDescription,
-      atsScore: atsResult.score,
-      matchedKeywords: atsResult.matchedKeywords,
-      missingKeywords: atsResult.missingKeywords,
-    });
+  userId: user._id,
+  fileName: file.name,
+  resumeText,
+  targetRole,
+  experienceLevel,
+  atsScore: atsResult.score,
+  matchedKeywords: atsResult.matchedKeywords,
+  missingKeywords: atsResult.missingKeywords,
+});
+
 
     return NextResponse.json(resume);
   } catch (error: any) {

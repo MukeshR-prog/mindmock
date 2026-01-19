@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       jobDescription,
       interviewType,
       difficulty,
+      answers: [], 
     });
 
     return NextResponse.json(interview);

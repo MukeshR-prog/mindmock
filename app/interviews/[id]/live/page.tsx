@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 export default function LiveInterviewPage() {
   const { id } = useParams();
   const router = useRouter();
-
+  const forceStopRef = useRef(false);
   // 🎙 Speech recognition instance
   const recognitionRef = useRef<any>(null);
 
@@ -55,6 +55,7 @@ export default function LiveInterviewPage() {
       alert("Speech recognition not supported in this browser");
       return;
     }
+    forceStopRef.current = false;
 
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.lang = "en-US";
@@ -66,6 +67,7 @@ export default function LiveInterviewPage() {
     };
 
     recognition.onresult = (event: any) => {
+       if (forceStopRef.current) return;
       const answer = event.results[0][0].transcript;
 
       // Save answer
@@ -74,8 +76,22 @@ export default function LiveInterviewPage() {
     };
 
     recognition.onend = async () => {
+      if (forceStopRef.current) {
+        stopListening();
+        return;
+      }
       stopListening();
       await fetchNextQuestion(lastAnswerRef.current);
+      await fetch("/api/interviews/evaluate-answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        interviewId: id,
+        question: currentQuestion,
+        answer: lastAnswerRef.current,
+  }),
+});
+
     };
 
     recognition.start();
@@ -83,10 +99,18 @@ export default function LiveInterviewPage() {
   };
 
   const stopMic = () => {
+    forceStopRef.current = true;
+
     if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onend = null;
       recognitionRef.current.stop();
+      recognitionRef.current = null;
     }
+
+    stopListening();
   };
+
 
   const saveProgress = async () => {
     await fetch("/api/interviews/update-transcript", {
@@ -102,6 +126,10 @@ export default function LiveInterviewPage() {
   };
 
   const endInterview = async () => {
+     if (recognitionRef.current) {
+    recognitionRef.current.stop();
+    recognitionRef.current = null;
+  }
     await fetch("/api/interviews/end", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -111,10 +139,7 @@ export default function LiveInterviewPage() {
       }),
     });
 
-    // Clear local interview state (optional but clean)
-    // useInterviewStore.getState().reset();
-
-    router.push("/interviews/history");
+  router.push(`/interviews/${id}/feedback`);
   };
 
   return (
