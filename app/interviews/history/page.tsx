@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Card, CardBody } from "@heroui/card";
-
+import Link from "next/link";
 type InterviewItem = {
   _id: string;
   createdAt: string;
@@ -47,7 +47,13 @@ export default function InterviewHistoryPage() {
               <p className="text-sm text-gray-500">
                 Status: {interview.status}
               </p>
-            </CardBody>
+              <Link
+                href={`/interviews/${interview._id}/feedback`}
+                className="text-blue-600 text-sm"
+                >
+                View Feedback →
+              </Link>
+              </CardBody>
           </Card>
         ))}
       </div>
