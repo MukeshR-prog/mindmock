@@ -32,8 +32,7 @@ export default function FeedbackPage() {
       <h1 className="text-2xl font-semibold mb-6">
         Interview Feedback
       </h1>
-
-      {interview.answers.map((a: any, i: number) => (
+      {interview?.answers?.map((a: any, i: number) => (
         <Card key={i} className="mb-4">
           <CardBody>
             <p className="font-medium">
