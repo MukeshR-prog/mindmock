@@ -3,8 +3,7 @@ import { connectDB } from "@/config/mongodb";
 import Resume from "@/models/Resume";
 import User from "@/models/User";
 import mammoth from "mammoth";
-import { calculateATS } from "@/utils/ats";
-
+import { calculateUniversalATS } from "@/utils/universalATS";
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -52,7 +51,7 @@ if (!targetRole || !experienceLevel) {
     const resumeText = result.value;
 
     // 🔍 ATS analysis
-    const atsResult = calculateATS(resumeText, jobDescription);
+    const atsResult = calculateUniversalATS(resumeText, jobDescription);
 
     // 💾 Save to DB
     const resume = await Resume.create({
@@ -61,13 +60,20 @@ if (!targetRole || !experienceLevel) {
   resumeText,
   targetRole,
   experienceLevel,
-  atsScore: atsResult.score,
+  atsScore: atsResult.atsScore,
   matchedKeywords: atsResult.matchedKeywords,
   missingKeywords: atsResult.missingKeywords,
 });
 
+return NextResponse.json({
+  atsScore: atsResult.atsScore,
+  detectedRole: atsResult.detectedRole,
+  keywordScore: atsResult.keywordScore,
+  roleSkillScore: atsResult.roleSkillScore,
+  matchedKeywords: atsResult.matchedKeywords,
+  missingKeywords: atsResult.missingKeywords,
+});
 
-    return NextResponse.json(resume);
   } catch (error: any) {
     console.error("RESUME ANALYZE ERROR 👉", error);
     return NextResponse.json(
