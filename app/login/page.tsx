@@ -41,13 +41,13 @@ export default function LoginPage() {
           <Input
             label="Email"
             type="email"
-            onChange={(e:any) => setEmail(e.target.value)}
+            onChange={(e: any) => setEmail(e.target.value)}
           />
 
           <Input
             label="Password"
             type="password"
-            onChange={(e:any) => setPassword(e.target.value)}
+            onChange={(e: any) => setPassword(e.target.value)}
           />
 
           <Button color="primary" onPress={handleEmailLogin}>
@@ -66,6 +66,13 @@ export default function LoginPage() {
             onPress={() => router.push("/forgot-password")}
           >
             Forgot Password?
+          </Button>
+          <Button
+            size="sm"
+            variant="light"
+            onPress={() => router.push("/signup")}
+          >
+            New user? Create an account
           </Button>
         </CardBody>
       </Card>

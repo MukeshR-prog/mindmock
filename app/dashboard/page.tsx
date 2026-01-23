@@ -54,7 +54,7 @@ export default function DashboardPage() {
               Total Interviews
             </p>
             <p className="text-2xl font-bold">
-              {data.totalInterviews}
+              {data?.totalInterviews}
             </p>
           </CardBody>
         </Card>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
               Average Score
             </p>
             <p className="text-2xl font-bold">
-              {data.avgScore}
+              {data?.avgScore}
             </p>
           </CardBody>
         </Card>
@@ -87,7 +87,7 @@ export default function DashboardPage() {
               Improvement Rate
             </p>
             <p className="text-2xl font-bold">
-              {data.improvementRate}%
+              {data?.improvementRate}%
             </p>
           </CardBody>
         </Card>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
             Score Trend Over Time
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data.charts.trendData}>
+            <LineChart data={data?.charts?.trendData}>
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
@@ -123,7 +123,7 @@ export default function DashboardPage() {
               Skill Breakdown
             </h2>
             <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={data.charts.radarData}>
+              <RadarChart data={data?.charts?.radarData}>
                 <PolarGrid />
                 <PolarAngleAxis dataKey="skill" />
                 <Radar
@@ -146,12 +146,12 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={data.charts.fillerData}
+                  data={data?.charts?.fillerData}
                   dataKey="value"
                   nameKey="name"
                   outerRadius={100}
                 >
-                  {data.charts.fillerData.map(
+                  {data?.charts?.fillerData?.map(
                     (_: any, idx: number) => (
                       <Cell
                         key={idx}
@@ -175,7 +175,7 @@ export default function DashboardPage() {
             Interview Skill Comparison
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.charts.comparisonData}>
+            <BarChart data={data?.charts?.comparisonData}>
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
