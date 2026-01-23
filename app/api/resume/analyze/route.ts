@@ -4,6 +4,8 @@ import Resume from "@/models/Resume";
 import User from "@/models/User";
 import mammoth from "mammoth";
 import { calculateUniversalATS } from "@/utils/universalATS";
+import { generateResumeSuggestions } from "@/utils/resumeSuggestions";
+
 export async function POST(req: Request) {
   try {
     await connectDB();
@@ -52,6 +54,10 @@ if (!targetRole || !experienceLevel) {
 
     // 🔍 ATS analysis
     const atsResult = calculateUniversalATS(resumeText, jobDescription);
+    const suggestions = generateResumeSuggestions(
+      atsResult.missingKeywords,
+      atsResult.detectedRole
+    );
 
     // 💾 Save to DB
     const resume = await Resume.create({
@@ -72,6 +78,7 @@ return NextResponse.json({
   roleSkillScore: atsResult.roleSkillScore,
   matchedKeywords: atsResult.matchedKeywords,
   missingKeywords: atsResult.missingKeywords,
+  suggestions
 });
 
   } catch (error: any) {

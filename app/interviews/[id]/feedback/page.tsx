@@ -46,7 +46,9 @@ export default function FeedbackPage() {
               <p>STAR Score: {a.starScore}/10</p>
               <p>Fillers: {a.fillerWords.join(", ") || "None"}</p>
             </div>
-
+             <h2 className="font-semibold mb-2">
+                 AI Suggestions
+             </h2>
             <p className="mt-3 text-sm text-gray-600">
               {a.feedback}
             </p>

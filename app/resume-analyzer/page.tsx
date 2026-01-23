@@ -135,6 +135,22 @@ export default function ResumeAnalyzerPage() {
     </CardBody>
   </Card>
 )}
+{result?.suggestions && (
+  <Card className="mt-6">
+    <CardBody>
+      <h2 className="text-lg font-semibold mb-2">
+        AI Resume Suggestions
+      </h2>
+
+      <ul className="list-disc pl-5 space-y-1 text-sm">
+        {result.suggestions.map((s: string, idx: number) => (
+          <li key={idx}>{s}</li>
+        ))}
+      </ul>
+    </CardBody>
+  </Card>
+)}
+
 
     </div>
   );
