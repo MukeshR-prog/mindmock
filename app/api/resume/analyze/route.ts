@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import Resume from "@/models/Resume";
@@ -31,10 +33,11 @@ if (!targetRole || !experienceLevel) {
       );
     }
 
-    // ❌ Only DOCX for Day 3
-    if (!file.name.toLowerCase().endsWith(".docx")) {
+    // ✅ Validate file format (PDF or DOCX)
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith(".pdf") && !fileName.endsWith(".docx")) {
       return NextResponse.json(
-        { error: "Only .docx resumes are supported for now" },
+        { error: "Only PDF and DOCX files are supported" },
         { status: 400 }
       );
     }
@@ -47,10 +50,92 @@ if (!targetRole || !experienceLevel) {
       );
     }
 
-    // 🧠 Extract text from DOCX
+    // 🧠 Extract text from file
     const buffer = Buffer.from(await file.arrayBuffer());
-    const result = await mammoth.extractRawText({ buffer });
-    const resumeText = result.value;
+    let resumeText = "";
+
+    if (file.name.toLowerCase().endsWith(".pdf")) {
+      // Extract from PDF using pdf2json
+      try {
+        const PDFParser = require("pdf2json");
+        const pdfParser = new PDFParser(null, 1);
+        
+        // Parse PDF using Promise
+        const parsePdf = () => new Promise<string>((resolve, reject) => {
+          pdfParser.on("pdfParser_dataError", (errData: any) => {
+            console.error("PDF Parser Error:", errData);
+            reject(errData.parserError);
+          });
+          pdfParser.on("pdfParser_dataReady", (pdfData: any) => {
+            try {
+              // Safe decode function that handles malformed URIs
+              const safeDecode = (str: string): string => {
+                try {
+                  return decodeURIComponent(str);
+                } catch {
+                  // If decode fails, return the original string
+                  return str.replace(/%[0-9A-Fa-f]{2}/g, (match) => {
+                    try {
+                      return decodeURIComponent(match);
+                    } catch {
+                      return match;
+                    }
+                  });
+                }
+              };
+
+              // Extract text from all pages
+              let text = "";
+              if (pdfData && pdfData.Pages) {
+                pdfData.Pages.forEach((page: any) => {
+                  if (page.Texts) {
+                    page.Texts.forEach((textItem: any) => {
+                      if (textItem.R) {
+                        textItem.R.forEach((run: any) => {
+                          if (run.T) {
+                            text += safeDecode(run.T) + " ";
+                          }
+                        });
+                      }
+                    });
+                    text += "\n";
+                  }
+                });
+              }
+              console.log("Extracted PDF text length:", text.length);
+              resolve(text.trim());
+            } catch (extractError) {
+              console.error("Text extraction error:", extractError);
+              reject(extractError);
+            }
+          });
+          pdfParser.parseBuffer(buffer);
+        });
+
+        resumeText = await parsePdf();
+      } catch (pdfError: any) {
+        console.error("PDF parsing error:", pdfError);
+        return NextResponse.json(
+          { error: "Failed to parse PDF file", details: pdfError.message },
+          { status: 400 }
+        );
+      }
+    } else if (file.name.toLowerCase().endsWith(".docx")) {
+      // Extract from DOCX
+      const result = await mammoth.extractRawText({ buffer });
+      resumeText = result.value;
+    }
+
+    console.log("Final extracted text length:", resumeText.length);
+    console.log("Text preview:", resumeText.substring(0, 200));
+
+    if (!resumeText.trim()) {
+      console.error("Empty text extracted from file:", file.name);
+      return NextResponse.json(
+        { error: "Failed to extract text from resume. The file may be empty or contain only images." },
+        { status: 400 }
+      );
+    }
 
     // 🔍 ATS analysis
     const atsResult = calculateUniversalATS(resumeText, jobDescription);
