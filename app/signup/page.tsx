@@ -40,7 +40,8 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingBtnSignup, setLoadingBtnSignup] = useState(false);
+  const [loadingBtnGoogle, setLoadingBtnGoogle] = useState(false);  
   const [error, setError] = useState("");
 
   const passwordRequirements = [
@@ -51,7 +52,7 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     try {
-      setLoading(true);
+      setLoadingBtnSignup(true);
       setError("");
 
       if (password !== confirmPassword) {
@@ -91,13 +92,13 @@ export default function SignupPage() {
         setError("An error occurred during signup");
       }
     } finally {
-      setLoading(false);
+      setLoadingBtnSignup(false);
     }
   };
 
   const handleGoogleSignup = async () => {
     try {
-      setLoading(true);
+      setLoadingBtnGoogle(true);
       setError("");
 
       const provider = new GoogleAuthProvider();
@@ -123,7 +124,7 @@ export default function SignupPage() {
         setError("An error occurred during signup");
       }
     } finally {
-      setLoading(false);
+      setLoadingBtnGoogle(false);
     }
   };
 
@@ -276,7 +277,7 @@ export default function SignupPage() {
                   className="w-full font-medium"
                   startContent={<GoogleIcon size={20} />}
                   onPress={handleGoogleSignup}
-                  isLoading={loading}
+                  isLoading={loadingBtnGoogle}
                 >
                   Continue with Google
                 </Button>
@@ -429,7 +430,7 @@ export default function SignupPage() {
                   className="w-full font-semibold"
                   endContent={<ArrowRightIcon size={18} />}
                   onPress={handleSignup}
-                  isLoading={loading}
+                  isLoading={loadingBtnSignup}
                   isDisabled={!agreeTerms}
                 >
                   Create Account
