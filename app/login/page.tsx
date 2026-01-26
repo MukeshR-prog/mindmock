@@ -32,12 +32,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingBtnEmail, setLoadingBtnEmail] = useState(false);
+  const [loadingBtnGoogle, setLoadingBtnGoogle] = useState(false);
   const [error, setError] = useState("");
 
   const handleEmailLogin = async () => {
     try {
-      setLoading(true);
+      setLoadingBtnEmail(true);
       setError("");
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/dashboard");
@@ -48,13 +49,13 @@ export default function LoginPage() {
         setError("An error occurred during login");
       }
     } finally {
-      setLoading(false);
+      setLoadingBtnEmail(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
-      setLoading(true);
+      setLoadingBtnGoogle(true);
       setError("");
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
@@ -66,7 +67,7 @@ export default function LoginPage() {
         setError("An error occurred during login");
       }
     } finally {
-      setLoading(false);
+      setLoadingBtnGoogle(false);
     }
   };
 
@@ -158,7 +159,7 @@ export default function LoginPage() {
                 className="w-full font-medium"
                 startContent={<GoogleIcon size={20} />}
                 onPress={handleGoogleLogin}
-                isLoading={loading}
+                isLoading={loadingBtnGoogle}
               >
                 Continue with Google
               </Button>
@@ -233,7 +234,7 @@ export default function LoginPage() {
                 className="w-full font-semibold"
                 endContent={<ArrowRightIcon size={18} />}
                 onPress={handleEmailLogin}
-                isLoading={loading}
+                isLoading={loadingBtnEmail}
               >
                 Sign In
               </Button>
