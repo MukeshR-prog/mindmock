@@ -7,6 +7,116 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: "font", sans-serif;
-    --font-mono: "monospace", monospace;
+    --font-sans: "Inter", "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--heroui-content1));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--heroui-primary) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--heroui-primary) / 0.5);
+}
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection Color */
+::selection {
+  background: hsl(var(--heroui-primary) / 0.3);
+  color: hsl(var(--heroui-foreground));
+}
+
+/* Focus Visible */
+*:focus-visible {
+  outline: 2px solid hsl(var(--heroui-primary));
+  outline-offset: 2px;
+}
+
+/* Gradient Text Animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Glass Effect */
+.glass {
+  background: hsl(var(--heroui-content1) / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Card Hover Effect */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px hsl(var(--heroui-primary) / 0.1);
+}
+
+/* Text Glow Effect */
+.text-glow {
+  text-shadow: 0 0 20px hsl(var(--heroui-primary) / 0.5);
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Hide scrollbar for mobile nav */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pulse Animation for CTAs */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--heroui-primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px hsl(var(--heroui-primary) / 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
 }
