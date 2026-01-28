@@ -1,21 +1,30 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
-import { Card, CardBody } from "@heroui/card";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
+import { Chip } from "@heroui/chip";
+import { motion, AnimatePresence } from "framer-motion";
 import { useInterviewStore } from "@/store/interviewStore";
-import { useRouter } from "next/navigation";
+import {
+  DashboardNavbar,
+  GradientText,
+  MicrophoneIcon,
+  VolumeIcon,
+  CheckCircleIcon,
+  SparklesIcon,
+} from "@/components";
 
 export default function LiveInterviewPage() {
   const { id } = useParams();
   const router = useRouter();
   const forceStopRef = useRef(false);
-  // 🎙 Speech recognition instance
   const recognitionRef = useRef<any>(null);
-
-  // 🧠 Store last spoken answer for AI follow-up
   const lastAnswerRef = useRef<string>("");
+  const [questionCount, setQuestionCount] = useState(1);
+  const [isAnswering, setIsAnswering] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const {
     setInterviewId,
@@ -28,7 +37,19 @@ export default function LiveInterviewPage() {
     stopListening,
   } = useInterviewStore();
 
-  // 🔥 Fetch AI-generated question from server
+  // Text-to-speech for AI questions
+  const speakQuestion = (text: string) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Fetch AI-generated question from server
   const fetchNextQuestion = async (previousAnswer?: string) => {
     const res = await fetch("/api/interviews/generate-question", {
       method: "POST",
@@ -42,6 +63,8 @@ export default function LiveInterviewPage() {
     const data = await res.json();
     setQuestion(data.question);
     addTranscript(`AI: ${data.question}`);
+    setQuestionCount((prev) => prev + 1);
+    speakQuestion(data.question);
   };
 
   // Initial question
@@ -56,6 +79,7 @@ export default function LiveInterviewPage() {
       return;
     }
     forceStopRef.current = false;
+    setIsAnswering(true);
 
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.lang = "en-US";
@@ -67,10 +91,8 @@ export default function LiveInterviewPage() {
     };
 
     recognition.onresult = (event: any) => {
-       if (forceStopRef.current) return;
+      if (forceStopRef.current) return;
       const answer = event.results[0][0].transcript;
-
-      // Save answer
       lastAnswerRef.current = answer;
       addTranscript(`You: ${answer}`);
     };
@@ -78,20 +100,25 @@ export default function LiveInterviewPage() {
     recognition.onend = async () => {
       if (forceStopRef.current) {
         stopListening();
+        setIsAnswering(false);
         return;
       }
       stopListening();
-      await fetchNextQuestion(lastAnswerRef.current);
-      await fetch("/api/interviews/evaluate-answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        interviewId: id,
-        question: currentQuestion,
-        answer: lastAnswerRef.current,
-  }),
-});
+      setIsAnswering(false);
 
+      // Evaluate answer
+      await fetch("/api/interviews/evaluate-answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interviewId: id,
+          question: currentQuestion,
+          answer: lastAnswerRef.current,
+        }),
+      });
+
+      // Fetch next question
+      await fetchNextQuestion(lastAnswerRef.current);
     };
 
     recognition.start();
@@ -109,8 +136,8 @@ export default function LiveInterviewPage() {
     }
 
     stopListening();
+    setIsAnswering(false);
   };
-
 
   const saveProgress = async () => {
     await fetch("/api/interviews/update-transcript", {
@@ -122,14 +149,21 @@ export default function LiveInterviewPage() {
       }),
     });
 
+    // Show a toast or notification
     alert("Interview progress saved");
   };
 
   const endInterview = async () => {
-     if (recognitionRef.current) {
-    recognitionRef.current.stop();
-    recognitionRef.current = null;
-  }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    // Stop any ongoing speech
+    if ("speechSynthesis" in window) {
+      speechSynthesis.cancel();
+    }
+
     await fetch("/api/interviews/end", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -139,46 +173,221 @@ export default function LiveInterviewPage() {
       }),
     });
 
-  router.push(`/interviews/${id}/feedback`);
+    router.push(`/interviews/${id}/feedback`);
   };
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Live Mock Interview</h1>
+    <div className="min-h-screen bg-background">
+      <DashboardNavbar />
 
-      <Card>
-        <CardBody>
-          <p className="font-medium mb-4">AI: {currentQuestion}</p>
-
-          {!isListening ? (
-            <Button color="primary" onPress={startMic}>
-              Answer
-            </Button>
-          ) : (
-            <Button color="danger" onPress={stopMic}>
-              Stop Listening
-            </Button>
-          )}
-        </CardBody>
-      </Card>
-
-      <Card className="mt-6">
-        <CardBody>
-          <h2 className="font-semibold mb-2">Transcript</h2>
-          <div className="space-y-1 text-sm">
-            {transcript.map((line, index) => (
-              <p key={index}>{line}</p>
-            ))}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
+        >
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">
+              <GradientText>Live Interview</GradientText>
+            </h1>
+            <p className="text-foreground/60">
+              Question {questionCount} • Speak clearly and take your time
+            </p>
           </div>
-        </CardBody>
-      </Card>
+          <div className="flex gap-2">
+            <Button
+              variant="bordered"
+              onPress={saveProgress}
+              startContent={<CheckCircleIcon size={18} />}
+            >
+              Save Progress
+            </Button>
+            <Button color="danger" variant="flat" onPress={endInterview}>
+              End Interview
+            </Button>
+          </div>
+        </motion.div>
 
-      <Button className="mt-6" variant="bordered" onPress={saveProgress}>
-        Save Progress
-      </Button>
-      <Button className="mt-4" color="danger" onPress={endInterview}>
-        End Interview
-      </Button>
+        {/* Main Interview Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Question Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-2"
+          >
+            <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+              <CardHeader className="px-6 pt-6 pb-0">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isSpeaking
+                        ? "bg-primary/20 animate-pulse"
+                        : "bg-primary/10"
+                    }`}
+                  >
+                    <SparklesIcon size={20} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">AI Interviewer</h3>
+                    <p className="text-sm text-foreground/60">
+                      {isSpeaking ? "Speaking..." : "Waiting for your answer"}
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardBody className="px-6 pb-6">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentQuestion}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="py-6"
+                  >
+                    <p className="text-lg leading-relaxed">{currentQuestion}</p>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Microphone Control */}
+                <div className="flex flex-col items-center mt-6 pt-6 border-t border-divider">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={isListening ? stopMic : startMic}
+                    className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
+                      isListening
+                        ? "bg-danger shadow-lg shadow-danger/30"
+                        : "bg-primary shadow-lg shadow-primary/30"
+                    }`}
+                  >
+                    {isListening ? (
+                      <motion.div
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 1 }}
+                      >
+                        <VolumeIcon size={40} className="text-white" />
+                      </motion.div>
+                    ) : (
+                      <MicrophoneIcon size={40} className="text-white" />
+                    )}
+                  </motion.button>
+                  <p className="mt-4 text-sm text-foreground/60">
+                    {isListening
+                      ? "Listening... Click to stop"
+                      : "Click to start answering"}
+                  </p>
+
+                  {isListening && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-1 mt-4"
+                    >
+                      {[...Array(5)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="w-1 bg-primary rounded-full"
+                          animate={{
+                            height: [10, 30, 10],
+                          }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 0.5,
+                            delay: i * 0.1,
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          </motion.div>
+
+          {/* Transcript Sidebar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className="bg-content1/50 backdrop-blur-sm border border-divider sticky top-24 max-h-[70vh] overflow-hidden">
+              <CardHeader className="px-6 pt-6 pb-0">
+                <h3 className="text-lg font-semibold">Transcript</h3>
+              </CardHeader>
+              <CardBody className="px-6 pb-6 overflow-y-auto max-h-[calc(70vh-80px)]">
+                <div className="space-y-4">
+                  {transcript.length === 0 ? (
+                    <p className="text-sm text-foreground/40 text-center py-8">
+                      Your conversation will appear here...
+                    </p>
+                  ) : (
+                    transcript.map((line, index) => {
+                      const isAI = line.startsWith("AI:");
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: isAI ? -10 : 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className={`p-3 rounded-xl text-sm ${
+                            isAI
+                              ? "bg-primary/10 mr-4"
+                              : "bg-content2 ml-4"
+                          }`}
+                        >
+                          <Chip
+                            size="sm"
+                            variant="flat"
+                            color={isAI ? "primary" : "default"}
+                            className="mb-2"
+                          >
+                            {isAI ? "AI" : "You"}
+                          </Chip>
+                          <p className="text-foreground/80">
+                            {line.replace(/^(AI:|You:)\s*/, "")}
+                          </p>
+                        </motion.div>
+                      );
+                    })
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Tips Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8"
+        >
+          <Card className="bg-primary/5 border border-primary/20">
+            <CardBody className="p-4">
+              <div className="flex flex-wrap gap-4 justify-center text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon size={16} className="text-primary" />
+                  <span>Use the STAR method for behavioral questions</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon size={16} className="text-primary" />
+                  <span>Avoid filler words like &quot;um&quot; and &quot;uh&quot;</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon size={16} className="text-primary" />
+                  <span>Take a moment to think before answering</span>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </motion.div>
+      </main>
     </div>
   );
 }
