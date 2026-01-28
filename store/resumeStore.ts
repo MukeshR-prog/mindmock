@@ -3,7 +3,11 @@ import { create } from "zustand";
 type ResumeSummary = {
   _id: string;
   fileName: string;
+  targetRole?: string;
+  experienceLevel?: string;
   atsScore: number;
+  matchedKeywords?: string[];
+  missingKeywords?: string[];
   createdAt: string;
 };
 
