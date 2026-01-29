@@ -53,7 +53,7 @@ export default function ResumeAnalyzerPage() {
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.name.endsWith(".docx")) {
+      if (droppedFile.name.endsWith(".docx") || droppedFile.name.endsWith(".pdf")) {
         setFile(droppedFile);
       }
     }
@@ -133,7 +133,7 @@ export default function ResumeAnalyzerPage() {
                 <div>
                   <h3 className="text-lg font-semibold">Upload Resume</h3>
                   <p className="text-sm text-foreground/60">
-                    DOCX format supported
+                    DOCX and PDF format supported
                   </p>
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function ResumeAnalyzerPage() {
               >
                 <input
                   type="file"
-                  accept=".docx"
+                  accept=".docx,.pdf"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
@@ -171,7 +171,7 @@ export default function ResumeAnalyzerPage() {
                       Drag & drop your resume here
                     </p>
                     <p className="text-sm text-foreground/60">
-                      or click to browse (DOCX only)
+                      or click to browse (DOCX and PDF)
                     </p>
                   </>
                 )}
