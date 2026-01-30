@@ -146,25 +146,28 @@ if (!targetRole || !experienceLevel) {
 
     // 💾 Save to DB
     const resume = await Resume.create({
-  userId: user._id,
-  fileName: file.name,
-  resumeText,
-  targetRole,
-  experienceLevel,
-  atsScore: atsResult.atsScore,
-  matchedKeywords: atsResult.matchedKeywords,
-  missingKeywords: atsResult.missingKeywords,
-});
+      userId: user._id,
+      fileName: file.name,
+      resumeText,
+      targetRole,
+      experienceLevel,
+      atsScore: atsResult.atsScore,
+      matchedKeywords: atsResult.matchedKeywords,
+      missingKeywords: atsResult.missingKeywords,
+    });
 
-return NextResponse.json({
-  atsScore: atsResult.atsScore,
-  detectedRole: atsResult.detectedRole,
-  keywordScore: atsResult.keywordScore,
-  roleSkillScore: atsResult.roleSkillScore,
-  matchedKeywords: atsResult.matchedKeywords,
-  missingKeywords: atsResult.missingKeywords,
-  suggestions
-});
+    // Update user's ATS stats
+    await updateUserAtsStats(user._id);
+
+    return NextResponse.json({
+      atsScore: atsResult.atsScore,
+      detectedRole: atsResult.detectedRole,
+      keywordScore: atsResult.keywordScore,
+      roleSkillScore: atsResult.roleSkillScore,
+      matchedKeywords: atsResult.matchedKeywords,
+      missingKeywords: atsResult.missingKeywords,
+      suggestions
+    });
 
   } catch (error: any) {
     console.error("RESUME ANALYZE ERROR 👉", error);
@@ -173,4 +176,21 @@ return NextResponse.json({
       { status: 500 }
     );
   }
+}
+
+// Helper function to update user's ATS stats
+async function updateUserAtsStats(userId: string) {
+  const resumes = await Resume.find({ userId }).lean();
+  
+  if (!resumes.length) return;
+  
+  const totalResumes = resumes.length;
+  const avgAtsScore = Math.round(
+    resumes.reduce((sum: number, r: any) => sum + (r.atsScore || 0), 0) / totalResumes
+  );
+  
+  await User.findByIdAndUpdate(userId, {
+    totalResumes,
+    avgAtsScore,
+  });
 }

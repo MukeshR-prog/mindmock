@@ -8,10 +8,18 @@ const UserSchema = new Schema(
     provider: { type: String }, // google | password
     role: { type: String, default: "user" },
 
-    // dashboard stats
+    // Dashboard stats (stored in DB)
     totalInterviews: { type: Number, default: 0 },
-    bestConfidence: { type: Number, default: 0 },
+    avgScore: { type: Number, default: 0 },
+    bestScore: { type: Number, default: 0 },
+    improvementRate: { type: Number, default: 0 },
     avgAtsScore: { type: Number, default: 0 },
+    totalResumes: { type: Number, default: 0 },
+    
+    // Skill averages
+    avgRelevance: { type: Number, default: 0 },
+    avgConfidence: { type: Number, default: 0 },
+    avgStarScore: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

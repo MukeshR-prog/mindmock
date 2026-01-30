@@ -1,4 +1,6 @@
 // Icon Components
+export { default as MoonIcon } from "./MoonIcon";
+export { default as SunIcon } from "./SunIcon";
 export { default as ResumeIcon } from "./ResumeIcon";
 export { default as MicrophoneIcon } from "./MicrophoneIcon";
 export { default as BrainIcon } from "./BrainIcon";

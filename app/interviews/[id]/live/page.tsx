@@ -25,6 +25,7 @@ export default function LiveInterviewPage() {
   const [questionCount, setQuestionCount] = useState(1);
   const [isAnswering, setIsAnswering] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentAnswer, setCurrentAnswer] = useState("");
 
   const {
     setInterviewId,
@@ -83,28 +84,88 @@ export default function LiveInterviewPage() {
 
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.lang = "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    let finalTranscript = "";
+    let interimTranscript = "";
 
     recognition.onstart = () => {
       startListening();
+      finalTranscript = "";
+      interimTranscript = "";
+      setCurrentAnswer("");
     };
 
     recognition.onresult = (event: any) => {
       if (forceStopRef.current) return;
-      const answer = event.results[0][0].transcript;
-      lastAnswerRef.current = answer;
-      addTranscript(`You: ${answer}`);
+      
+      finalTranscript = "";
+      interimTranscript = "";
+      
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript + " ";
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+      
+      const fullAnswer = (finalTranscript + interimTranscript).trim();
+      lastAnswerRef.current = fullAnswer;
+      setCurrentAnswer(fullAnswer);
     };
 
     recognition.onend = async () => {
+      // If force stopped by user, don't do anything (stopMic handles it)
       if (forceStopRef.current) {
-        stopListening();
-        setIsAnswering(false);
         return;
       }
-      stopListening();
-      setIsAnswering(false);
+      
+      // If recognition ended unexpectedly (e.g., silence timeout), restart it
+      // This keeps listening until user manually stops
+      if (recognitionRef.current && !forceStopRef.current) {
+        try {
+          recognition.start();
+        } catch (e) {
+          // Recognition may have been stopped, ignore
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      // Handle no-speech error by restarting
+      if (event.error === "no-speech" && !forceStopRef.current) {
+        try {
+          recognition.start();
+        } catch (e) {
+          // Ignore
+        }
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const stopMic = async () => {
+    forceStopRef.current = true;
+
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    stopListening();
+    setIsAnswering(false);
+
+    // If there's an answer, process it
+    if (lastAnswerRef.current.trim()) {
+      addTranscript(`You: ${lastAnswerRef.current}`);
+      setCurrentAnswer("");
 
       // Evaluate answer
       await fetch("/api/interviews/evaluate-answer", {
@@ -119,24 +180,8 @@ export default function LiveInterviewPage() {
 
       // Fetch next question
       await fetchNextQuestion(lastAnswerRef.current);
-    };
-
-    recognition.start();
-    recognitionRef.current = recognition;
-  };
-
-  const stopMic = () => {
-    forceStopRef.current = true;
-
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
+      lastAnswerRef.current = "";
     }
-
-    stopListening();
-    setIsAnswering(false);
   };
 
   const saveProgress = async () => {
@@ -302,6 +347,18 @@ export default function LiveInterviewPage() {
                           }}
                         />
                       ))}
+                    </motion.div>
+                  )}
+
+                  {/* Real-time Answer Display */}
+                  {isListening && currentAnswer && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full mt-6 p-4 rounded-xl bg-content2/50 border border-divider"
+                    >
+                      <p className="text-sm text-foreground/60 mb-2">Your answer:</p>
+                      <p className="text-foreground leading-relaxed">{currentAnswer}</p>
                     </motion.div>
                   )}
                 </div>

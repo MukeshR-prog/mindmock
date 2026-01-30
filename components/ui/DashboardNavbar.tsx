@@ -3,6 +3,7 @@
 import { Button } from "@heroui/button";
 import { Avatar } from "@heroui/avatar";
 import { Link } from "@heroui/link";
+import { Switch } from "@heroui/switch";
 import {
   Dropdown,
   DropdownTrigger,
@@ -12,13 +13,16 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { signOut } from "firebase/auth";
+import { useTheme } from "next-themes";
 import { auth } from "@/config/firebase";
 import { useAuthStore } from "@/store/authStore";
 
 import {
   ChartIcon,
-  ResumeIcon,
   MicrophoneIcon,
+  MoonIcon,
+  ResumeIcon,
+  SunIcon,
   UserIcon,
 } from "@/components/icons";
 
@@ -44,10 +48,15 @@ export default function DashboardNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/");
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
@@ -93,8 +102,23 @@ export default function DashboardNavbar() {
             })}
           </div>
 
-          {/* Right Side - User Menu */}
-          <div className="flex items-center gap-4">
+          {/* Right Side - Theme Toggle & User Menu */}
+          <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="p-2 rounded-xl bg-content2 hover:bg-content3 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <SunIcon size={20} />
+              ) : (
+                <MoonIcon size={20} />
+              )}
+            </motion.button>
+
             {/* Mobile Navigation */}
             <div className="flex md:hidden">
               <Dropdown placement="bottom-end">
@@ -175,10 +199,11 @@ export default function DashboardNavbar() {
                   Resume History
                 </DropdownItem>
                 <DropdownItem
-                  key="settings"
-                  startContent={<UserIcon size={16} />}
+                  key="theme"
+                  startContent={theme === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+                  onPress={toggleTheme}
                 >
-                  Settings
+                  {theme === "dark" ? "Light Mode" : "Dark Mode"}
                 </DropdownItem>
                 <DropdownItem
                   key="logout"

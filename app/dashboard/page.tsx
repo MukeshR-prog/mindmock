@@ -48,6 +48,8 @@ interface DashboardData {
   avgScore: number;
   bestScore: number;
   improvementRate: number;
+  avgAtsScore: number;
+  totalResumes: number;
   trendData: Array<{ name: string; score: number }>;
   radarData: Array<{ skill: string; score: number }>;
   fillerData: Array<{ name: string; value: number; color: string }>;
@@ -84,7 +86,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [avgAtsScore, setAvgAtsScore] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,8 +118,7 @@ export default function DashboardPage() {
         const dashboardJson = await dashboardRes.json();
         setDashboardData(dashboardJson);
 
-        // Process resumes
-        let atsTotal = 0;
+        // Process recent activities
         const activities: Activity[] = [];
 
         if (resumesRes.ok) {
@@ -126,7 +126,6 @@ export default function DashboardPage() {
           const resumes: ResumeData[] = resumesJson.resumes || [];
 
           resumes.forEach((resume) => {
-            atsTotal += resume.atsScore || 0;
             activities.push({
               id: resume._id,
               type: "resume",
@@ -136,10 +135,6 @@ export default function DashboardPage() {
               date: new Date(resume.createdAt).toLocaleDateString(),
             });
           });
-
-          if (resumes.length > 0) {
-            setAvgAtsScore(Math.round(atsTotal / resumes.length));
-          }
         }
 
         // Process interviews
@@ -202,7 +197,7 @@ export default function DashboardPage() {
   const calculateCareerReadiness = () => {
     if (!dashboardData) return 0;
     const interviewWeight = dashboardData.avgScore * 0.5;
-    const atsWeight = avgAtsScore * 0.3;
+    const atsWeight = (dashboardData.avgAtsScore || 0) * 0.3;
     const improvementWeight = Math.min(dashboardData.improvementRate, 100) * 0.2;
     return Math.round(interviewWeight + atsWeight + improvementWeight);
   };
@@ -317,7 +312,7 @@ export default function DashboardPage() {
           <DashboardStatCard
             icon={<ResumeIcon size={24} className="text-warning" />}
             label="ATS Score"
-            value={`${avgAtsScore}%`}
+            value={`${dashboardData?.avgAtsScore || 0}%`}
             gradient="from-warning/20 to-orange-500/20"
             delay={0.3}
           />
