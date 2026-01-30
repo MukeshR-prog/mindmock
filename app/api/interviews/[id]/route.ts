@@ -4,12 +4,13 @@ import Interview from "@/models/Interview";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const interview = await Interview.findById(params.id).lean();
+    const { id } = await params;
+    const interview = await Interview.findById(id).lean();
 
     if (!interview) {
       return NextResponse.json(

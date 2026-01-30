@@ -21,8 +21,14 @@ const InterviewSchema = new Schema(
       default: "created",
     },
 
+    // Interview settings
+    targetRole: { type: String },
+    interviewType: { type: String, enum: ["technical", "behavioral", "mixed"], default: "mixed" },
+    difficulty: { type: String, enum: ["junior", "mid", "senior", "stress"], default: "junior" },
+    jobDescription: { type: String },
+
     transcript: String,
-    answers: [AnswerSchema], // 🔥 NEW
+    answers: [AnswerSchema],
     overallScore: Number,
   },
   { timestamps: true }
