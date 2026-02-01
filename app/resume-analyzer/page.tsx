@@ -26,6 +26,7 @@ export default function ResumeAnalyzerPage() {
   const [file, setFile] = useState<File | null>(null);
   const [jd, setJd] = useState("");
   const [role, setRole] = useState<string>("frontend");
+  const [customRole, setCustomRole] = useState<string>("");
   const [experience, setExperience] = useState<string>("fresher");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -68,7 +69,7 @@ export default function ResumeAnalyzerPage() {
     formData.append("resume", file);
     formData.append("jobDescription", jd);
     formData.append("firebaseUid", user.uid);
-    formData.append("targetRole", role);
+    formData.append("targetRole", role === "custom" ? customRole : role);
     formData.append("experienceLevel", experience);
 
     const res = await fetch("/api/resume/analyze", {
@@ -191,24 +192,42 @@ export default function ResumeAnalyzerPage() {
 
               {/* Options Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  label="Target Role"
-                  selectedKeys={[role]}
-                  onSelectionChange={(keys) => {
-                    const value = Array.from(keys)[0] as string;
-                    setRole(value);
-                  }}
-                  classNames={{
-                    trigger: "bg-content2/50",
-                  }}
-                >
-                  <SelectItem key="frontend">Frontend Developer</SelectItem>
-                  <SelectItem key="backend">Backend Developer</SelectItem>
-                  <SelectItem key="fullstack">Full Stack Developer</SelectItem>
-                  <SelectItem key="devops">DevOps Engineer</SelectItem>
-                  <SelectItem key="data">Data Scientist</SelectItem>
-                  <SelectItem key="mobile">Mobile Developer</SelectItem>
-                </Select>
+                <div className="space-y-3">
+                  <Select
+                    label="Target Role"
+                    selectedKeys={[role]}
+                    onSelectionChange={(keys) => {
+                      const value = Array.from(keys)[0] as string;
+                      setRole(value);
+                      if (value !== "custom") {
+                        setCustomRole("");
+                      }
+                    }}
+                    classNames={{
+                      trigger: "bg-content2/50",
+                    }}
+                  >
+                    <SelectItem key="frontend">Frontend Developer</SelectItem>
+                    <SelectItem key="backend">Backend Developer</SelectItem>
+                    <SelectItem key="fullstack">Full Stack Developer</SelectItem>
+                    <SelectItem key="devops">DevOps Engineer</SelectItem>
+                    <SelectItem key="data">Data Scientist</SelectItem>
+                    <SelectItem key="mobile">Mobile Developer</SelectItem>
+                    <SelectItem key="custom">Other (Custom Role)</SelectItem>
+                  </Select>
+
+                  {role === "custom" && (
+                    <Input
+                      label="Enter Custom Role"
+                      placeholder="e.g., Machine Learning Engineer, QA Engineer..."
+                      value={customRole}
+                      onChange={(e) => setCustomRole(e.target.value)}
+                      classNames={{
+                        inputWrapper: "bg-content2/50",
+                      }}
+                    />
+                  )}
+                </div>
 
                 <Select
                   label="Experience Level"
@@ -234,7 +253,7 @@ export default function ResumeAnalyzerPage() {
                 size="lg"
                 onPress={analyzeResume}
                 isLoading={loading}
-                isDisabled={!file}
+                isDisabled={!file || (role === "custom" && !customRole.trim())}
                 className="w-full font-semibold"
               >
                 {loading ? "Analyzing..." : "Analyze Resume"}
