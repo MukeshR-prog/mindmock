@@ -273,54 +273,119 @@ export default function ResumeAnalyzerPage() {
             {/* ATS Score Card */}
             <Card className="bg-content1/50 backdrop-blur-sm border border-divider overflow-hidden">
               <CardBody className="p-6">
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="relative">
-                    <svg className="w-32 h-32 -rotate-90">
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        fill="none"
-                        stroke="hsl(var(--heroui-content2))"
-                        strokeWidth="12"
-                      />
-                      <motion.circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        fill="none"
-                        stroke={`hsl(var(--heroui-${getScoreColor(result.atsScore)}))`}
-                        strokeWidth="12"
-                        strokeLinecap="round"
-                        strokeDasharray={351.86}
-                        initial={{ strokeDashoffset: 351.86 }}
-                        animate={{
-                          strokeDashoffset:
-                            351.86 - (result.atsScore / 100) * 351.86,
-                        }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-3xl font-bold">{result.atsScore}</span>
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Score Circle */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <svg className="w-32 h-32 -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          fill="none"
+                          stroke="hsl(var(--heroui-content2))"
+                          strokeWidth="12"
+                        />
+                        <motion.circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          fill="none"
+                          stroke={`hsl(var(--heroui-${getScoreColor(result.atsScore)}))`}
+                          strokeWidth="12"
+                          strokeLinecap="round"
+                          strokeDasharray={351.86}
+                          initial={{ strokeDashoffset: 351.86 }}
+                          animate={{
+                            strokeDashoffset:
+                              351.86 - (result.atsScore / 100) * 351.86,
+                          }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-3xl font-bold">{result.atsScore}</span>
+                      </div>
                     </div>
+                    {result.industryBenchmark && (
+                      <div className="mt-3 text-center">
+                        <p className="text-sm text-foreground/60">
+                          {result.industryBenchmark.percentile}th percentile
+                        </p>
+                        <p className="text-xs text-foreground/50">
+                          Industry avg: {result.industryBenchmark.averageScore}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1 text-center md:text-left">
-                    <h2 className="text-2xl font-bold mb-2">ATS Score</h2>
-                    <p className="text-foreground/60 mb-4">
-                      {result.atsScore >= 80
-                        ? "Excellent! Your resume is well-optimized for ATS."
-                        : result.atsScore >= 60
-                        ? "Good score! Some improvements can be made."
-                        : "Your resume needs optimization for better ATS compatibility."}
-                    </p>
-                    <Button
-                      color="primary"
-                      variant="flat"
-                      onPress={() => router.push("/interviews/setup")}
-                    >
-                      Start Mock Interview
-                    </Button>
+
+                  {/* Score Details */}
+                  <div className="flex-1">
+                    <div className="mb-4">
+                      <h2 className="text-2xl font-bold mb-1">ATS Score Analysis</h2>
+                      <p className="text-foreground/60">
+                        {result.atsScore >= 80
+                          ? "Excellent! Your resume is well-optimized for ATS."
+                          : result.atsScore >= 60
+                          ? "Good score! Some improvements can be made."
+                          : "Your resume needs optimization for better ATS compatibility."}
+                      </p>
+                      {result.detectedRole && (
+                        <p className="text-sm text-primary mt-1">
+                          Detected Role: {result.detectedRole}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Detailed Scores */}
+                    {result.detailedScores && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold mb-2">Detailed Breakdown</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="text-center p-3 bg-content2/30 rounded-lg">
+                            <div className="text-lg font-bold text-primary">
+                              {result.detailedScores.keywordMatch}%
+                            </div>
+                            <div className="text-xs text-foreground/60">Keywords</div>
+                          </div>
+                          <div className="text-center p-3 bg-content2/30 rounded-lg">
+                            <div className="text-lg font-bold text-secondary">
+                              {result.detailedScores.skillsMatch}%
+                            </div>
+                            <div className="text-xs text-foreground/60">Skills</div>
+                          </div>
+                          <div className="text-center p-3 bg-content2/30 rounded-lg">
+                            <div className="text-lg font-bold text-success">
+                              {result.detailedScores.formatScore}%
+                            </div>
+                            <div className="text-xs text-foreground/60">Format</div>
+                          </div>
+                          <div className="text-center p-3 bg-content2/30 rounded-lg">
+                            <div className="text-lg font-bold text-warning">
+                              {result.detailedScores.experienceScore}%
+                            </div>
+                            <div className="text-xs text-foreground/60">Experience</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        color="primary"
+                        variant="flat"
+                        onPress={() => router.push("/interviews/setup")}
+                      >
+                        Start Mock Interview
+                      </Button>
+                      <Button
+                        color="secondary"
+                        variant="flat"
+                        onPress={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                      >
+                        View Suggestions
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardBody>
@@ -340,9 +405,9 @@ export default function ResumeAnalyzerPage() {
                       Consider adding these keywords to improve your ATS score:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {result.missingKeywords.map((word: string) => (
+                      {result.missingKeywords.map((word: string, idx: number) => (
                         <Chip
-                          key={word}
+                          key={`missing-${idx}-${word}`}
                           color="danger"
                           variant="flat"
                           size="sm"
@@ -366,9 +431,9 @@ export default function ResumeAnalyzerPage() {
                   </CardHeader>
                   <CardBody className="px-6 pb-6">
                     <div className="flex flex-wrap gap-2">
-                      {result.matchedKeywords.map((word: string) => (
+                      {result.matchedKeywords.map((word: string, idx: number) => (
                         <Chip
-                          key={word}
+                          key={`matched-${idx}-${word}`}
                           color="success"
                           variant="flat"
                           size="sm"
@@ -381,8 +446,120 @@ export default function ResumeAnalyzerPage() {
                 </Card>
               )}
 
-            {/* AI Suggestions */}
-            {result?.suggestions && result.suggestions.length > 0 && (
+            {/* Strengths & Weaknesses */}
+            {(result?.strengths?.length > 0 || result?.weaknesses?.length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Strengths */}
+                {result.strengths?.length > 0 && (
+                  <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+                    <CardHeader className="px-6 pt-6 pb-0">
+                      <h3 className="text-lg font-semibold text-success">✅ Strengths</h3>
+                    </CardHeader>
+                    <CardBody className="px-6 pb-6">
+                      <div className="space-y-2">
+                        {result.strengths.map((strength: string, idx: number) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <CheckCircleIcon size={16} className="text-success flex-shrink-0" />
+                            <p className="text-sm">{strength}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardBody>
+                  </Card>
+                )}
+
+                {/* Weaknesses */}
+                {result.weaknesses?.length > 0 && (
+                  <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+                    <CardHeader className="px-6 pt-6 pb-0">
+                      <h3 className="text-lg font-semibold text-warning">⚠️ Areas for Improvement</h3>
+                    </CardHeader>
+                    <CardBody className="px-6 pb-6">
+                      <div className="space-y-2">
+                        {result.weaknesses.map((weakness: string, idx: number) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-warning/20 flex-shrink-0" />
+                            <p className="text-sm">{weakness}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardBody>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Critical Missing Skills */}
+            {result?.criticalMissingSkills && result.criticalMissingSkills.length > 0 && (
+              <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+                <CardHeader className="px-6 pt-6 pb-0">
+                  <h3 className="text-lg font-semibold text-danger">
+                    🎯 Critical Missing Skills
+                  </h3>
+                </CardHeader>
+                <CardBody className="px-6 pb-6">
+                  <p className="text-sm text-foreground/60 mb-4">
+                    These skills are highly valued for your target role:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {result.criticalMissingSkills.map((skill: string, idx: number) => (
+                      <Chip
+                        key={`critical-${idx}-${skill}`}
+                        color="danger"
+                        variant="flat"
+                        size="sm"
+                      >
+                        {skill}
+                      </Chip>
+                    ))}
+                  </div>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Enhanced AI Recommendations */}
+            {result?.recommendations && result.recommendations.length > 0 && (
+              <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+                <CardHeader className="px-6 pt-6 pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                      <SparklesIcon size={20} />
+                    </div>
+                    <h3 className="text-lg font-semibold">🚀 Priority Recommendations</h3>
+                  </div>
+                </CardHeader>
+                <CardBody className="px-6 pb-6">
+                  <div className="grid gap-3">
+                    {result.recommendations.slice(0, 8).map((recommendation: string, idx: number) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.1 }}
+                        className="flex items-start gap-3 p-4 rounded-xl bg-content2/50 hover:bg-content2/70 transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-xs font-bold text-primary">
+                            {idx + 1}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed">{recommendation}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                  {result.recommendations.length > 8 && (
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-foreground/60">
+                        +{result.recommendations.length - 8} more recommendations available
+                      </p>
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Legacy AI Suggestions for backward compatibility */}
+            {result?.suggestions && result.suggestions.length > 0 && !result?.recommendations && (
               <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
                 <CardHeader className="px-6 pt-6 pb-0">
                   <div className="flex items-center gap-3">

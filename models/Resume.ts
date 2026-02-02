@@ -17,6 +17,25 @@ const ResumeSchema = new Schema(
     atsScore: Number,
     matchedKeywords: [String],
     missingKeywords: [String],
+    
+    // Enhanced ATS fields
+    detailedScores: {
+      keywordMatch: Number,
+      skillsMatch: Number,
+      formatScore: Number,
+      experienceScore: Number,
+      educationScore: Number,
+      contactScore: Number,
+      sectionScore: Number,
+      quantifiableScore: Number
+    },
+    strengths: [String],
+    weaknesses: [String],
+    industryBenchmark: {
+      percentile: Number,
+      averageScore: Number,
+      topTierThreshold: Number
+    }
   },
   { timestamps: true }
 );
