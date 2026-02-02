@@ -5,8 +5,8 @@ import { connectDB } from "@/config/mongodb";
 import Resume from "@/models/Resume";
 import User from "@/models/User";
 import mammoth from "mammoth";
-import { calculateUniversalATS } from "@/utils/universalATS";
-import { generateResumeSuggestions } from "@/utils/resumeSuggestions";
+import { calculateIndustryStandardATS } from "@/utils/industryStandardATS";
+import { generateEnhancedResumeSuggestions } from "@/utils/enhancedResumeSuggestions";
 
 export async function POST(req: Request) {
   try {
@@ -137,14 +137,17 @@ if (!targetRole || !experienceLevel) {
       );
     }
 
-    // 🔍 ATS analysis
-    const atsResult = calculateUniversalATS(resumeText, jobDescription);
-    const suggestions = generateResumeSuggestions(
-      atsResult.missingKeywords,
-      atsResult.detectedRole
+    // 🔍 Industry-standard ATS analysis
+    const atsResult = calculateIndustryStandardATS(
+      resumeText, 
+      jobDescription, 
+      targetRole, 
+      experienceLevel
     );
+    
+    const enhancedSuggestions = generateEnhancedResumeSuggestions(atsResult);
 
-    // 💾 Save to DB
+    // 💾 Save to DB with enhanced data
     const resume = await Resume.create({
       userId: user._id,
       fileName: file.name,
@@ -154,6 +157,10 @@ if (!targetRole || !experienceLevel) {
       atsScore: atsResult.atsScore,
       matchedKeywords: atsResult.matchedKeywords,
       missingKeywords: atsResult.missingKeywords,
+      detailedScores: atsResult.detailedScores,
+      strengths: atsResult.strengths,
+      weaknesses: atsResult.weaknesses,
+      industryBenchmark: atsResult.industryBenchmark
     });
 
     // Update user's ATS stats
@@ -162,11 +169,18 @@ if (!targetRole || !experienceLevel) {
     return NextResponse.json({
       atsScore: atsResult.atsScore,
       detectedRole: atsResult.detectedRole,
-      keywordScore: atsResult.keywordScore,
-      roleSkillScore: atsResult.roleSkillScore,
+      detailedScores: atsResult.detailedScores,
       matchedKeywords: atsResult.matchedKeywords,
       missingKeywords: atsResult.missingKeywords,
-      suggestions
+      criticalMissingSkills: atsResult.criticalMissingSkills,
+      recommendations: atsResult.recommendations,
+      strengths: atsResult.strengths,
+      weaknesses: atsResult.weaknesses,
+      industryBenchmark: atsResult.industryBenchmark,
+      suggestions: enhancedSuggestions,
+      // Legacy compatibility
+      keywordScore: atsResult.detailedScores.keywordMatch,
+      roleSkillScore: atsResult.detailedScores.skillsMatch
     });
 
   } catch (error: any) {

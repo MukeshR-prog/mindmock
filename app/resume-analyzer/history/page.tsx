@@ -262,9 +262,9 @@ export default function ResumeHistoryPage() {
                           <span className="text-xs text-foreground/60">
                             Matched:
                           </span>
-                          {resume.matchedKeywords.slice(0, 5).map((keyword) => (
+                          {resume.matchedKeywords.slice(0, 5).map((keyword, idx) => (
                             <Chip
-                              key={keyword}
+                              key={`matched-${resume._id}-${idx}-${keyword}`}
                               size="sm"
                               color="success"
                               variant="flat"
