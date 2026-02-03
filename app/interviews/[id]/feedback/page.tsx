@@ -38,6 +38,8 @@ interface Interview {
   overallScore?: number;
   answers: Answer[];
   createdAt: string;
+  interviewMode?: string;
+  selectedConcepts?: string[];
 }
 
 export default function FeedbackPage() {
@@ -167,8 +169,14 @@ export default function FeedbackPage() {
             </h1>
             <p className="text-foreground/60">
               {interview.targetRole || "Mock Interview"} •{" "}
+              {interview.interviewMode === "concept-based" ? "Concept-Based" : "Resume-Based"} •{" "}
               {new Date(interview.createdAt).toLocaleDateString()}
             </p>
+            {interview.selectedConcepts && interview.selectedConcepts.length > 0 && (
+              <p className="text-sm text-foreground/50 mt-1">
+                Topics: {interview.selectedConcepts.map(c => c.toUpperCase()).join(", ")}
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
             <Button

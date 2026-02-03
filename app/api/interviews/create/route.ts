@@ -14,11 +14,32 @@ export async function POST(req: Request) {
       jobDescription,
       interviewType,
       difficulty,
+      interviewMode,
+      selectedConcepts,
+      conceptFocus,
+      targetRole,
     } = body;
 
-    if (!firebaseUid || !resumeId || !jobDescription) {
+    // Validate based on interview mode
+    if (!firebaseUid) {
       return NextResponse.json(
-        { error: "Missing fields" },
+        { error: "Missing user ID" },
+        { status: 400 }
+      );
+    }
+
+    // Resume-based requires resumeId and jobDescription
+    if (interviewMode === "resume-based" && (!resumeId || !jobDescription)) {
+      return NextResponse.json(
+        { error: "Resume and job description required for resume-based interview" },
+        { status: 400 }
+      );
+    }
+
+    // Concept-based requires selectedConcepts
+    if (interviewMode === "concept-based" && (!selectedConcepts || selectedConcepts.length === 0)) {
+      return NextResponse.json(
+        { error: "Please select at least one concept for concept-based interview" },
         { status: 400 }
       );
     }
@@ -31,14 +52,27 @@ export async function POST(req: Request) {
       );
     }
 
-    const interview = await Interview.create({
+    const interviewData: any = {
       userId: user._id,
-      resumeId,
-      jobDescription,
       interviewType,
       difficulty,
-      answers: [], 
-    });
+      interviewMode: interviewMode || "resume-based",
+      answers: [],
+    };
+
+    // Add fields based on interview mode
+    if (interviewMode === "concept-based") {
+      interviewData.selectedConcepts = selectedConcepts;
+      interviewData.conceptFocus = conceptFocus;
+      interviewData.targetRole = targetRole || "Software Engineer";
+      // Generate a description for concept-based interviews
+      interviewData.jobDescription = `Technical interview focusing on ${selectedConcepts.join(", ")} concepts for ${targetRole || "Software Engineer"} position.`;
+    } else {
+      interviewData.resumeId = resumeId;
+      interviewData.jobDescription = jobDescription;
+    }
+
+    const interview = await Interview.create(interviewData);
 
     return NextResponse.json(interview);
   } catch (error: any) {

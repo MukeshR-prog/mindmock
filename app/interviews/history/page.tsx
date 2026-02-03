@@ -23,6 +23,8 @@ interface InterviewItem {
   targetRole?: string;
   overallScore?: number;
   interviewType?: string;
+  interviewMode?: string;
+  selectedConcepts?: string[];
 }
 
 export default function InterviewHistoryPage() {
@@ -222,7 +224,7 @@ export default function InterviewHistoryPage() {
                               }
                             )}
                           </p>
-                          <div className="flex items-center gap-2 mt-2">
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
                             <Chip
                               size="sm"
                               color={getStatusColor(interview.status)}
@@ -230,10 +232,21 @@ export default function InterviewHistoryPage() {
                             >
                               {interview.status}
                             </Chip>
+                            {interview.interviewMode === "concept-based" && (
+                              <Chip size="sm" color="secondary" variant="flat">
+                                Concept-Based
+                              </Chip>
+                            )}
                             {interview.interviewType && (
                               <Chip size="sm" variant="bordered">
                                 {interview.interviewType}
                               </Chip>
+                            )}
+                            {interview.selectedConcepts && interview.selectedConcepts.length > 0 && (
+                              <span className="text-xs text-foreground/50">
+                                Topics: {interview.selectedConcepts.slice(0, 3).map(c => c.toUpperCase()).join(", ")}
+                                {interview.selectedConcepts.length > 3 && ` +${interview.selectedConcepts.length - 3} more`}
+                              </span>
                             )}
                           </div>
                         </div>

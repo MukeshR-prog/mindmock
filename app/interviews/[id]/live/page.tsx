@@ -22,10 +22,12 @@ export default function LiveInterviewPage() {
   const forceStopRef = useRef(false);
   const recognitionRef = useRef<any>(null);
   const lastAnswerRef = useRef<string>("");
+  const hasFetchedInitialQuestion = useRef(false);
   const [questionCount, setQuestionCount] = useState(1);
   const [isAnswering, setIsAnswering] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentAnswer, setCurrentAnswer] = useState("");
+  const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
 
   const {
     setInterviewId,
@@ -36,6 +38,7 @@ export default function LiveInterviewPage() {
     isListening,
     startListening,
     stopListening,
+    reset,
   } = useInterviewStore();
 
   // Text-to-speech for AI questions
@@ -52,25 +55,57 @@ export default function LiveInterviewPage() {
 
   // Fetch AI-generated question from server
   const fetchNextQuestion = async (previousAnswer?: string) => {
-    const res = await fetch("/api/interviews/generate-question", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        interviewId: id,
-        previousAnswer,
-      }),
-    });
+    try {
+      setIsLoadingQuestion(true);
+      const interviewId = Array.isArray(id) ? id[0] : id;
+      if (!interviewId) {
+        console.error("No interview ID available");
+        setQuestion("Error: No interview ID found.");
+        setIsLoadingQuestion(false);
+        return;
+      }
+      
+      const res = await fetch("/api/interviews/generate-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interviewId,
+          previousAnswer,
+        }),
+      });
 
-    const data = await res.json();
-    setQuestion(data.question);
-    addTranscript(`AI: ${data.question}`);
-    setQuestionCount((prev) => prev + 1);
-    speakQuestion(data.question);
+      const data = await res.json();
+      
+      if (!res.ok || !data.question) {
+        console.error("Failed to generate question:", data);
+        setQuestion(`Error: ${data.error || "Failed to generate question. Please try again."}`);
+        setIsLoadingQuestion(false);
+        return;
+      }
+      
+      setQuestion(data.question);
+      addTranscript(`AI: ${data.question}`);
+      setQuestionCount((prev) => prev + 1);
+      speakQuestion(data.question);
+    } catch (error) {
+      console.error("Error fetching question:", error);
+      setQuestion("Sorry, there was an error generating the question. Please try again.");
+    } finally {
+      setIsLoadingQuestion(false);
+    }
   };
 
-  // Initial question
+  // Initial question - only fetch once
   useEffect(() => {
-    setInterviewId(id as string);
+    if (!id) return;
+    if (hasFetchedInitialQuestion.current) return;
+    
+    hasFetchedInitialQuestion.current = true;
+    const interviewId = Array.isArray(id) ? id[0] : id;
+    
+    // Reset store to clear any stale data from previous interviews
+    reset();
+    setInterviewId(interviewId);
     fetchNextQuestion();
   }, [id]);
 
@@ -287,14 +322,21 @@ export default function LiveInterviewPage() {
               <CardBody className="px-6 pb-6">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={currentQuestion}
+                    key={currentQuestion || "loading"}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                     className="py-6"
                   >
-                    <p className="text-lg leading-relaxed">{currentQuestion}</p>
+                    {isLoadingQuestion ? (
+                      <div className="flex items-center gap-2 text-foreground/60">
+                        <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full"></div>
+                        <span>Generating question...</span>
+                      </div>
+                    ) : (
+                      <p className="text-lg leading-relaxed">{currentQuestion || "Loading question..."}</p>
+                    )}
                   </motion.div>
                 </AnimatePresence>
 
@@ -304,8 +346,11 @@ export default function LiveInterviewPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={isListening ? stopMic : startMic}
+                    disabled={isLoadingQuestion}
                     className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-                      isListening
+                      isLoadingQuestion
+                        ? "bg-default-300 cursor-not-allowed"
+                        : isListening
                         ? "bg-danger shadow-lg shadow-danger/30"
                         : "bg-primary shadow-lg shadow-primary/30"
                     }`}

@@ -13,7 +13,14 @@ const AnswerSchema = new Schema({
 const InterviewSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    resumeId: { type: Schema.Types.ObjectId, ref: "Resume", required: true },
+    resumeId: { type: Schema.Types.ObjectId, ref: "Resume" }, // Optional for concept-based interviews
+
+    // Interview mode
+    interviewMode: { 
+      type: String, 
+      enum: ["resume-based", "concept-based"], 
+      default: "resume-based" 
+    },
 
     status: {
       type: String,
@@ -26,6 +33,10 @@ const InterviewSchema = new Schema(
     interviewType: { type: String, enum: ["technical", "behavioral", "mixed"], default: "mixed" },
     difficulty: { type: String, enum: ["junior", "mid", "senior", "stress"], default: "junior" },
     jobDescription: { type: String },
+
+    // Concept-based interview fields
+    selectedConcepts: [{ type: String }], // OS, CN, DBMS, OOP, etc.
+    conceptFocus: { type: String }, // Primary concept focus
 
     transcript: String,
     answers: [AnswerSchema],

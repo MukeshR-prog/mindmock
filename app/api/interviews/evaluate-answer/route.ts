@@ -18,13 +18,33 @@ export async function POST(req: Request) {
     const { interviewId, question, answer } = await req.json();
 
     const interview = await Interview.findById(interviewId);
-    const resume = await Resume.findById(interview.resumeId);
 
-    if (!interview || !resume) {
+    if (!interview) {
       return NextResponse.json(
-        { error: "Interview or resume not found" },
+        { error: "Interview not found" },
         { status: 404 }
       );
+    }
+
+    // Determine role and experience based on interview mode
+    let role: string;
+    let experience: string;
+
+    if (interview.interviewMode === "concept-based") {
+      // Concept-based interview - use interview data directly
+      role = interview.targetRole;
+      experience = interview.difficulty || "mid-level";
+    } else {
+      // Resume-based interview - get from resume
+      const resume = await Resume.findById(interview.resumeId);
+      if (!resume) {
+        return NextResponse.json(
+          { error: "Resume not found" },
+          { status: 404 }
+        );
+      }
+      role = resume.targetRole;
+      experience = resume.experienceLevel;
     }
 
     // 🔹 Filler words
@@ -34,8 +54,10 @@ export async function POST(req: Request) {
     const evalPrompt = answerEvaluationPrompt({
       question,
       answer,
-      role: resume.targetRole,
-      experience: resume.experienceLevel,
+      role,
+      experience,
+      interviewMode: interview.interviewMode,
+      selectedConcepts: interview.selectedConcepts,
     });
 
     const evalRes = await groq.chat.completions.create({
