@@ -16,6 +16,7 @@ import { signOut } from "firebase/auth";
 import { useTheme } from "next-themes";
 import { auth } from "@/config/firebase";
 import { useAuthStore } from "@/store/authStore";
+import { useEffect, useState } from "react";
 
 import {
   ChartIcon,
@@ -49,6 +50,12 @@ export default function DashboardNavbar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by waiting for mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -112,7 +119,10 @@ export default function DashboardNavbar() {
               className="p-2 rounded-xl bg-content2 hover:bg-content3 transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? (
+              {!mounted ? (
+                // Show a neutral icon during SSR to prevent hydration mismatch
+                <SunIcon size={20} />
+              ) : theme === "dark" ? (
                 <SunIcon size={20} />
               ) : (
                 <MoonIcon size={20} />
