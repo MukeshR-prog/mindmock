@@ -9,13 +9,16 @@ export { default as StatCard } from "./ui/StatCard";
 export { default as TestimonialCard } from "./ui/TestimonialCard";
 export { default as FloatingElements } from "./ui/FloatingElements";
 
-// Dashboard Components
+// Dashboard UI Components
 export { default as DashboardNavbar } from "./ui/DashboardNavbar";
 export { default as DashboardStatCard } from "./ui/DashboardStatCard";
 export { default as DashboardCard } from "./ui/DashboardCard";
 export { default as ProgressRing } from "./ui/ProgressRing";
 export { default as ActivityList } from "./ui/ActivityList";
 export { default as QuickActions } from "./ui/QuickActions";
+
+// Dashboard Page Components
+export * from "./dashboard";
 
 // Icon Components
 export * from "./icons";
