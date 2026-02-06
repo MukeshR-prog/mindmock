@@ -47,6 +47,10 @@ html {
   outline-offset: 2px;
 }
 
+/* ============================================
+   PRO-LEVEL ANIMATIONS & EFFECTS
+   ============================================ */
+
 /* Gradient Text Animation */
 @keyframes gradient-shift {
   0%, 100% {
@@ -62,26 +66,339 @@ html {
   animation: gradient-shift 3s ease infinite;
 }
 
-/* Glass Effect */
-.glass {
-  background: hsl(var(--heroui-content1) / 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* Advanced Gradient Flow */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-/* Card Hover Effect */
+.animate-gradient-flow {
+  background-size: 400% 400%;
+  animation: gradient-flow 8s ease infinite;
+}
+
+/* Aurora Background Effect */
+@keyframes aurora {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(10%, -10%) rotate(3deg) scale(1.05);
+  }
+  50% {
+    transform: translate(-5%, 15%) rotate(-3deg) scale(0.95);
+  }
+  75% {
+    transform: translate(-10%, -5%) rotate(2deg) scale(1.02);
+  }
+}
+
+.aurora-bg {
+  animation: aurora 20s ease-in-out infinite;
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--heroui-primary) / 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Glow Pulse */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px hsl(var(--heroui-primary) / 0.3),
+      0 0 40px hsl(var(--heroui-primary) / 0.2),
+      0 0 60px hsl(var(--heroui-primary) / 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px hsl(var(--heroui-primary) / 0.5),
+      0 0 60px hsl(var(--heroui-primary) / 0.3),
+      0 0 90px hsl(var(--heroui-primary) / 0.2);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Orbit Animation */
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateX(100px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(100px) rotate(-360deg);
+  }
+}
+
+.animate-orbit {
+  animation: orbit 20s linear infinite;
+}
+
+/* Glass Effect - Enhanced */
+.glass {
+  background: hsl(var(--heroui-content1) / 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid hsl(var(--heroui-foreground) / 0.1);
+}
+
+.glass-strong {
+  background: hsl(var(--heroui-content1) / 0.8);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid hsl(var(--heroui-foreground) / 0.15);
+}
+
+/* Card Hover Effect - Enhanced */
 .card-hover {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px hsl(var(--heroui-primary) / 0.1);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 25px 50px hsl(var(--heroui-primary) / 0.15),
+    0 10px 20px hsl(var(--heroui-primary) / 0.1);
 }
 
-/* Text Glow Effect */
+/* 3D Card Tilt Effect */
+.card-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-3d-inner {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Text Glow Effect - Enhanced */
 .text-glow {
-  text-shadow: 0 0 20px hsl(var(--heroui-primary) / 0.5);
+  text-shadow: 
+    0 0 10px hsl(var(--heroui-primary) / 0.5),
+    0 0 20px hsl(var(--heroui-primary) / 0.3),
+    0 0 40px hsl(var(--heroui-primary) / 0.2);
+}
+
+.text-glow-strong {
+  text-shadow: 
+    0 0 20px hsl(var(--heroui-primary) / 0.8),
+    0 0 40px hsl(var(--heroui-primary) / 0.5),
+    0 0 80px hsl(var(--heroui-primary) / 0.3);
+}
+
+/* Gradient Border */
+.gradient-border {
+  position: relative;
+  background: hsl(var(--heroui-content1));
+  z-index: 0;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--heroui-primary)),
+    hsl(var(--heroui-secondary)),
+    hsl(var(--heroui-primary))
+  );
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* Morphing Background */
+@keyframes morph {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+.morph-shape {
+  animation: morph 8s ease-in-out infinite;
+}
+
+/* Particle Float */
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+.particle {
+  animation: particle-float linear infinite;
+}
+
+/* Spotlight Effect */
+.spotlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    hsl(var(--heroui-primary) / 0.15) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.spotlight:hover::after {
+  opacity: 1;
+}
+
+/* Typewriter Effect */
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+.typewriter {
+  overflow: hidden;
+  border-right: 3px solid hsl(var(--heroui-primary));
+  white-space: nowrap;
+  animation: 
+    typewriter 3s steps(40) 1s forwards,
+    blink 0.75s step-end infinite;
+}
+
+/* Magnetic Button Effect */
+.magnetic-btn {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ripple Effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: hsl(var(--heroui-primary) / 0.3);
+  border-radius: 50%;
+  transform: scale(0);
+  pointer-events: none;
+}
+
+.ripple:active::after {
+  animation: ripple 0.6s linear;
+}
+
+/* Noise Texture Overlay */
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Responsive Typography */
@@ -107,16 +424,135 @@ html {
   display: none;
 }
 
-/* Pulse Animation for CTAs */
+/* Pulse Animation for CTAs - Enhanced */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 hsl(var(--heroui-primary) / 0.4);
+    box-shadow: 
+      0 0 0 0 hsl(var(--heroui-primary) / 0.4),
+      0 0 20px hsl(var(--heroui-primary) / 0.2);
   }
   50% {
-    box-shadow: 0 0 0 12px hsl(var(--heroui-primary) / 0);
+    box-shadow: 
+      0 0 0 15px hsl(var(--heroui-primary) / 0),
+      0 0 40px hsl(var(--heroui-primary) / 0.3);
   }
 }
 
 .pulse-glow {
-  animation: pulse-glow 2s infinite;
+  animation: pulse-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stagger Animation Helper */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Scale In Animation */
+@keyframes scale-in {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Slide Up Animation */
+@keyframes slide-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Blur In Animation */
+@keyframes blur-in {
+  0% {
+    filter: blur(10px);
+    opacity: 0;
+  }
+  100% {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+.animate-blur-in {
+  animation: blur-in 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Gradient Mesh Background */
+.gradient-mesh {
+  background: 
+    radial-gradient(at 40% 20%, hsl(var(--heroui-primary) / 0.3) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(var(--heroui-secondary) / 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsl(var(--heroui-primary) / 0.2) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsl(var(--heroui-secondary) / 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsl(var(--heroui-primary) / 0.1) 0px, transparent 50%);
+}
+
+/* Animated Underline */
+.animated-underline {
+  position: relative;
+}
+
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, hsl(var(--heroui-primary)), hsl(var(--heroui-secondary)));
+  transition: width 0.3s ease;
+}
+
+.animated-underline:hover::after {
+  width: 100%;
+}
+
+/* Number Counter Animation */
+@property --num {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+.counter {
+  transition: --num 2s ease-out;
+  counter-reset: num var(--num);
+}
+
+.counter::after {
+  content: counter(num);
 }
