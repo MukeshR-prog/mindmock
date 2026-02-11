@@ -169,11 +169,18 @@ export default function DashboardPage() {
       color: "from-secondary to-pink-600",
     },
     {
-      title: "View History",
+      title: "Interview History",
       description: "Review past interviews and feedback",
       icon: <ChartIcon size={24} />,
       href: "/interviews/history",
       color: "from-success to-green-600",
+    },
+    {
+      title: "Resume History",
+      description: "View all your analyzed resumes",
+      icon: <ResumeIcon size={24} />,
+      href: "/resume-analyzer/history",
+      color: "from-warning to-orange-600",
     },
   ];
 

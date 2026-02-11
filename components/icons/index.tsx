@@ -17,6 +17,7 @@ export { default as CheckCircleIcon } from "./CheckCircleIcon";
 export { default as GlobeIcon } from "./GlobeIcon";
 export { default as GoogleIcon } from "./GoogleIcon";
 export { default as ArrowRightIcon } from "./ArrowRightIcon";
+export { default as ArrowLeftIcon } from "./ArrowLeftIcon";
 export { default as PlayIcon } from "./PlayIcon";
 export { default as MailIcon } from "./MailIcon";
 export { default as LockIcon } from "./LockIcon";

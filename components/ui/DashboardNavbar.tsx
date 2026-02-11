@@ -39,6 +39,11 @@ const navItems = [
     icon: <ResumeIcon size={18} />,
   },
   {
+    label: "Resume History",
+    href: "/resume-analyzer/history",
+    icon: <ResumeIcon size={18} />,
+  },
+  {
     label: "Mock Interview",
     href: "/interviews/setup",
     icon: <MicrophoneIcon size={18} />,
