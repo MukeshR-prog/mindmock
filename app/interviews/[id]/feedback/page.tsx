@@ -8,6 +8,7 @@ import { Chip } from "@heroui/chip";
 import { Progress } from "@heroui/progress";
 import { Spinner } from "@heroui/spinner";
 import { motion } from "framer-motion";
+import { useAuthStore } from "@/store/authStore";
 import {
   DashboardNavbar,
   GradientText,
@@ -17,6 +18,7 @@ import {
   SparklesIcon,
   TrendingIcon,
   MicrophoneIcon,
+  ArrowLeftIcon,
 } from "@/components";
 
 interface Answer {
@@ -45,11 +47,21 @@ interface Interview {
 export default function FeedbackPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuthStore();
   const [interview, setInterview] = useState<Interview | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
+  // Redirect if not authenticated
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    
     const loadInterview = async () => {
       try {
         const res = await fetch(`/api/interviews/${id}`);
@@ -69,7 +81,19 @@ export default function FeedbackPage() {
     };
 
     loadInterview();
-  }, [id]);
+  }, [id, user]);
+
+  // Show loading if auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardNavbar />
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <Spinner size="lg" color="primary" />
+        </div>
+      </div>
+    );
+  }
 
   const getScoreColor = (score: number, max: number = 10) => {
     const percentage = (score / max) * 100;
@@ -156,6 +180,24 @@ export default function FeedbackPage() {
       <DashboardNavbar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-4"
+        >
+          <Button
+            variant="light"
+            size="sm"
+            startContent={<ArrowLeftIcon size={18} />}
+            onPress={() => router.push("/interviews/history")}
+            className="text-foreground/60 hover:text-foreground"
+          >
+            Back to Interview History
+          </Button>
+        </motion.div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

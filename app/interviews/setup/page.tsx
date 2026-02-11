@@ -19,6 +19,7 @@ import {
   TargetIcon,
   RocketIcon,
   BrainIcon,
+  ArrowLeftIcon,
 } from "@/components";
 
 // Core CS Concepts for concept-based interviews
@@ -193,6 +194,24 @@ export default function InterviewSetupPage() {
       <DashboardNavbar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-4"
+        >
+          <Button
+            variant="light"
+            size="sm"
+            startContent={<ArrowLeftIcon size={18} />}
+            onPress={() => router.push("/dashboard")}
+            className="text-foreground/60 hover:text-foreground"
+          >
+            Back to Dashboard
+          </Button>
+        </motion.div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

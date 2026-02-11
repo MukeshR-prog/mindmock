@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
+import { Spinner } from "@heroui/spinner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthStore } from "@/store/authStore";
 import { useInterviewStore } from "@/store/interviewStore";
 import {
   DashboardNavbar,
@@ -19,6 +21,7 @@ import {
 export default function LiveInterviewPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuthStore();
   const forceStopRef = useRef(false);
   const recognitionRef = useRef<any>(null);
   const lastAnswerRef = useRef<string>("");
@@ -40,6 +43,13 @@ export default function LiveInterviewPage() {
     stopListening,
     reset,
   } = useInterviewStore();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
 
   // Text-to-speech for AI questions
   const speakQuestion = (text: string) => {
@@ -95,9 +105,9 @@ export default function LiveInterviewPage() {
     }
   };
 
-  // Initial question - only fetch once
+  // Initial question - only fetch once when authenticated
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
     if (hasFetchedInitialQuestion.current) return;
     
     hasFetchedInitialQuestion.current = true;
@@ -107,7 +117,19 @@ export default function LiveInterviewPage() {
     reset();
     setInterviewId(interviewId);
     fetchNextQuestion();
-  }, [id]);
+  }, [id, user]);
+
+  // Show loading when auth is checking
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardNavbar />
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <Spinner size="lg" color="primary" />
+        </div>
+      </div>
+    );
+  }
 
   const startMic = () => {
     if (!("webkitSpeechRecognition" in window)) {
