@@ -275,7 +275,7 @@ export default function HomePage() {
             <Button
               color="primary"
               size="lg"
-              className="font-semibold px-8 py-6 text-base shadow-xl shadow-primary/25 pulse-glow"
+              className="font-semibold px-8 py-6 text-base shadow-xl shadow-primary/25 pulse-glow cursor-pointer"
               endContent={
                 <motion.span
                   animate={{ x: [0, 5, 0] }}
@@ -297,7 +297,7 @@ export default function HomePage() {
             <Button
               variant="bordered"
               size="lg"
-              className="px-8 py-6 text-base backdrop-blur-sm bg-content1/30 hover:bg-content1/50 transition-colors"
+              className="px-8 py-6 text-base backdrop-blur-sm bg-content1/30 hover:bg-content1/50 transition-colors cursor-pointer"
               startContent={
                 <motion.span
                   animate={{ scale: [1, 1.2, 1] }}
@@ -550,7 +550,7 @@ export default function HomePage() {
                 <Button
                   color="primary"
                   size="lg"
-                  className="font-semibold shadow-xl shadow-primary/25"
+                  className="font-semibold shadow-xl shadow-primary/25 cursor-pointer"
                   endContent={<ArrowRightIcon size={18} />}
                   onPress={() => router.push("/signup")}
                 >
@@ -778,7 +778,7 @@ export default function HomePage() {
                   </div>
                   <p className="text-foreground/60 mb-6">Perfect for getting started</p>
                   <div className="text-5xl font-extrabold mb-8">
-                    $0<span className="text-lg font-normal text-foreground/60">/month</span>
+                    ₹0<span className="text-lg font-normal text-foreground/60">/month</span>
                   </div>
 
                   <ul className="space-y-4 mb-10">
@@ -806,7 +806,7 @@ export default function HomePage() {
                     <Button
                       variant="bordered"
                       size="lg"
-                      className="w-full font-semibold backdrop-blur-sm"
+                      className="w-full font-semibold backdrop-blur-sm cursor-pointer"
                       onPress={() => router.push("/signup")}
                     >
                       Get Started Free
@@ -846,7 +846,7 @@ export default function HomePage() {
                   </div>
                   <p className="text-foreground/60 mb-6">For serious job seekers</p>
                   <div className="text-5xl font-extrabold mb-2">
-                    $19<span className="text-lg font-normal text-foreground/60">/month</span>
+                    ₹1599<span className="text-lg font-normal text-foreground/60">/month</span>
                   </div>
                   <p className="text-primary text-sm mb-8">Save 40% with annual billing</p>
 
@@ -877,7 +877,7 @@ export default function HomePage() {
                     <Button
                       color="primary"
                       size="lg"
-                      className="w-full font-semibold shadow-xl shadow-primary/25"
+                      className="w-full font-semibold shadow-xl shadow-primary/25 cursor-pointer"
                       onPress={() => router.push("/signup")}
                     >
                       Start Pro Trial
@@ -953,7 +953,7 @@ export default function HomePage() {
                   <Button
                     color="primary"
                     size="lg"
-                    className="font-semibold px-12 py-7 text-lg shadow-2xl shadow-primary/30 pulse-glow"
+                    className="font-semibold px-12 py-7 text-lg shadow-2xl shadow-primary/30 pulse-glow cursor-pointer"
                     endContent={
                       <motion.span
                         animate={{ x: [0, 5, 0] }}
@@ -974,7 +974,7 @@ export default function HomePage() {
                   <Button
                     variant="light"
                     size="lg"
-                    className="px-8 py-7 text-lg"
+                    className="px-8 py-7 text-lg cursor-pointer"
                     onPress={() => router.push("/login")}
                   >
                     Already have an account? Login

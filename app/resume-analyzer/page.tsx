@@ -117,7 +117,7 @@ export default function ResumeAnalyzerPage() {
             size="sm"
             startContent={<ArrowLeftIcon size={18} />}
             onPress={() => router.push("/dashboard")}
-            className="text-foreground/60 hover:text-foreground"
+            className="text-foreground/60 hover:text-foreground cursor-pointer"
           >
             Back to Dashboard
           </Button>
@@ -273,7 +273,7 @@ export default function ResumeAnalyzerPage() {
                 onPress={analyzeResume}
                 isLoading={loading}
                 isDisabled={!file || (role === "custom" && !customRole.trim())}
-                className="w-full font-semibold"
+                className="w-full font-semibold cursor-pointer"
               >
                 {loading ? "Analyzing..." : "Analyze Resume"}
               </Button>
@@ -393,6 +393,7 @@ export default function ResumeAnalyzerPage() {
                       <Button
                         color="primary"
                         variant="flat"
+                        className="cursor-pointer"
                         onPress={() => router.push("/interviews/setup")}
                       >
                         Start Mock Interview
@@ -400,6 +401,7 @@ export default function ResumeAnalyzerPage() {
                       <Button
                         color="secondary"
                         variant="flat"
+                        className="cursor-pointer"
                         onPress={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
                       >
                         View Suggestions

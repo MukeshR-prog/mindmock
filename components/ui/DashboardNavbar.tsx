@@ -121,7 +121,7 @@ export default function DashboardNavbar() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleTheme}
-              className="p-2 rounded-xl bg-content2 hover:bg-content3 transition-colors"
+              className="p-2 rounded-xl bg-content2 hover:bg-content3 transition-colors cursor-pointer"
               aria-label="Toggle theme"
             >
               {!mounted ? (
@@ -138,7 +138,7 @@ export default function DashboardNavbar() {
             <div className="flex md:hidden">
               <Dropdown placement="bottom-end">
                 <DropdownTrigger>
-                  <Button variant="light" isIconOnly size="sm">
+                  <Button variant="light" isIconOnly size="sm" className="cursor-pointer">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="24"
@@ -177,8 +177,8 @@ export default function DashboardNavbar() {
                   as="button"
                   size="sm"
                   name={user?.displayName || user?.email || "User"}
-                  src={user?.photoURL || undefined}
-                  className="ring-2 ring-primary/20 transition-transform hover:scale-105"
+                  src={user?.photoURL || "https://www.shutterstock.com/image-vector/user-icon-person-profile-avatar-260nw-601712213.jpg"}
+                  className="ring-2 ring-primary/20 transition-transform hover:scale-105 cursor-pointer"
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="User Actions">

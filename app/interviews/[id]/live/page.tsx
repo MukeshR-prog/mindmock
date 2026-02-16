@@ -301,12 +301,13 @@ export default function LiveInterviewPage() {
           <div className="flex gap-2">
             <Button
               variant="bordered"
+              className="cursor-pointer"
               onPress={saveProgress}
               startContent={<CheckCircleIcon size={18} />}
             >
               Save Progress
             </Button>
-            <Button color="danger" variant="flat" onPress={endInterview}>
+            <Button color="danger" variant="flat" className="cursor-pointer" onPress={endInterview}>
               End Interview
             </Button>
           </div>
@@ -373,8 +374,8 @@ export default function LiveInterviewPage() {
                       isLoadingQuestion
                         ? "bg-default-300 cursor-not-allowed"
                         : isListening
-                        ? "bg-danger shadow-lg shadow-danger/30"
-                        : "bg-primary shadow-lg shadow-primary/30"
+                        ? "bg-danger shadow-lg shadow-danger/30 cursor-pointer"
+                        : "bg-primary shadow-lg shadow-primary/30 cursor-pointer"
                     }`}
                   >
                     {isListening ? (
@@ -398,7 +399,7 @@ export default function LiveInterviewPage() {
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex items-center gap-1 mt-4"
+                      className="flex items-center gap-1 mt-4 h-5"
                     >
                       {[...Array(5)].map((_, i) => (
                         <motion.div

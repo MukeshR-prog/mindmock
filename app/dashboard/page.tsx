@@ -222,7 +222,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
             <p className="text-foreground/60 mb-4">{error}</p>
-            <Button color="primary" onPress={() => window.location.reload()}>
+            <Button color="primary" className="cursor-pointer" onPress={() => window.location.reload()}>
               Try Again
             </Button>
           </div>
