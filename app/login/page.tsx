@@ -156,7 +156,7 @@ export default function LoginPage() {
               <Button
                 variant="bordered"
                 size="lg"
-                className="w-full font-medium"
+                className="w-full font-medium cursor-pointer"
                 startContent={<GoogleIcon size={20} />}
                 onPress={handleGoogleLogin}
                 isLoading={loadingBtnGoogle}
@@ -201,7 +201,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-foreground/40 hover:text-foreground transition-colors"
+                    className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeOffIcon size={18} />
@@ -231,7 +231,7 @@ export default function LoginPage() {
               <Button
                 color="primary"
                 size="lg"
-                className="w-full font-semibold"
+                className="w-full font-semibold cursor-pointer"
                 endContent={<ArrowRightIcon size={18} />}
                 onPress={handleEmailLogin}
                 isLoading={loadingBtnEmail}

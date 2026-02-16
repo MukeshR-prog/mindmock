@@ -206,7 +206,7 @@ export default function InterviewSetupPage() {
             size="sm"
             startContent={<ArrowLeftIcon size={18} />}
             onPress={() => router.push("/dashboard")}
-            className="text-foreground/60 hover:text-foreground"
+            className="text-foreground/60 hover:text-foreground cursor-pointer"
           >
             Back to Dashboard
           </Button>
@@ -390,12 +390,14 @@ export default function InterviewSetupPage() {
                           <Button
                             color="primary"
                             variant="flat"
+                            className="cursor-pointer"
                             onPress={() => router.push("/resume-analyzer/history")}
                           >
                             View Resume History
                           </Button>
                           <Button
                             color="primary"
+                            className="cursor-pointer"
                             onPress={() => router.push("/resume-analyzer")}
                           >
                             Upload New Resume
@@ -419,6 +421,7 @@ export default function InterviewSetupPage() {
                             <Button
                               size="sm"
                               variant="flat"
+                              className="cursor-pointer"
                               onPress={() => router.push("/resume-analyzer/history")}
                             >
                               Change
@@ -496,7 +499,7 @@ export default function InterviewSetupPage() {
                   isLoading={loading}
                   isDisabled={!canStartInterview}
                   onPress={createInterview}
-                  className="w-full font-semibold"
+                  className="w-full font-semibold cursor-pointer"
                   startContent={!loading && <RocketIcon size={20} />}
                 >
                   {loading ? "Preparing Interview..." : "Start Interview"}

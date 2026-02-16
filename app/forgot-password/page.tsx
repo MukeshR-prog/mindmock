@@ -135,6 +135,7 @@ export default function ForgotPasswordPage() {
                   </p>
                   <Button
                     variant="bordered"
+                    className="cursor-pointer"
                     onPress={() => setSuccess(false)}
                   >
                     Send Another Link
@@ -173,7 +174,7 @@ export default function ForgotPasswordPage() {
                   <Button
                     color="primary"
                     size="lg"
-                    className="w-full font-semibold"
+                    className="w-full font-semibold cursor-pointer"
                     endContent={<ArrowRightIcon size={18} />}
                     onPress={handleReset}
                     isLoading={loading}

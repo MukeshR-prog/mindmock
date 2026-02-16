@@ -107,7 +107,7 @@ export default function InterviewHistoryPage() {
             size="sm"
             startContent={<ArrowLeftIcon size={18} />}
             onPress={() => router.push("/dashboard")}
-            className="text-foreground/60 hover:text-foreground"
+            className="text-foreground/60 hover:text-foreground cursor-pointer"
           >
             Back to Dashboard
           </Button>
@@ -130,6 +130,7 @@ export default function InterviewHistoryPage() {
           </div>
           <Button
             color="primary"
+            className="cursor-pointer"
             onPress={() => router.push("/interviews/setup")}
             startContent={<MicrophoneIcon size={18} />}
           >
@@ -207,6 +208,7 @@ export default function InterviewHistoryPage() {
             <Button
               color="primary"
               size="lg"
+              className="cursor-pointer"
               onPress={() => router.push("/resume-analyzer")}
             >
               Get Started
@@ -290,6 +292,7 @@ export default function InterviewHistoryPage() {
                             interview.status === "completed" ? "flat" : "solid"
                           }
                           size="sm"
+                          className="cursor-pointer"
                           endContent={<ArrowRightIcon size={16} />}
                           onPress={() =>
                             router.push(

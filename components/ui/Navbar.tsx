@@ -4,12 +4,21 @@ import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { SunIcon, MoonIcon } from "@/components/icons";
 
 export default function Navbar() {
   const router = useRouter();
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by waiting for mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 50);
@@ -87,6 +96,30 @@ export default function Navbar() {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-2 md:gap-4">
+            {/* Theme Toggle */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35, duration: 0.5 }}
+            >
+              <Button
+                isIconOnly
+                variant="light"
+                size="sm"
+                className="cursor-pointer"
+                onPress={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label="Toggle theme"
+              >
+                {!mounted ? (
+                  // Show a neutral icon during SSR to prevent hydration mismatch
+                  <SunIcon size={18} />
+                ) : theme === "dark" ? (
+                  <SunIcon size={18} />
+                ) : (
+                  <MoonIcon size={18} />
+                )}
+              </Button>
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -95,7 +128,7 @@ export default function Navbar() {
               <Button
                 variant="light"
                 size="sm"
-                className="hidden sm:flex font-medium"
+                className="hidden sm:flex font-medium cursor-pointer"
                 onPress={() => router.push("/login")}
               >
                 Login
@@ -111,7 +144,7 @@ export default function Navbar() {
               <Button
                 color="primary"
                 size="sm"
-                className="font-semibold shadow-lg shadow-primary/20"
+                className="font-semibold shadow-lg shadow-primary/20 cursor-pointer"
                 onPress={() => router.push("/signup")}
               >
                 Get Started

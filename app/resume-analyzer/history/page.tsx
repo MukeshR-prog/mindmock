@@ -104,7 +104,7 @@ export default function ResumeHistoryPage() {
             size="sm"
             startContent={<ArrowLeftIcon size={18} />}
             onPress={() => router.push("/dashboard")}
-            className="text-foreground/60 hover:text-foreground"
+            className="text-foreground/60 hover:text-foreground cursor-pointer"
           >
             Back to Dashboard
           </Button>
@@ -127,6 +127,7 @@ export default function ResumeHistoryPage() {
           </div>
           <Button
             color="primary"
+            className="cursor-pointer"
             onPress={() => router.push("/resume-analyzer")}
             startContent={<ResumeIcon size={18} />}
           >
@@ -197,6 +198,7 @@ export default function ResumeHistoryPage() {
             <Button
               color="primary"
               size="lg"
+              className="cursor-pointer"
               onPress={() => router.push("/resume-analyzer")}
             >
               Upload Resume
@@ -265,6 +267,7 @@ export default function ResumeHistoryPage() {
                           color="primary"
                           variant="flat"
                           size="sm"
+                          className="cursor-pointer"
                           endContent={<ArrowRightIcon size={16} />}
                           onPress={() => handleSelectResume(resume)}
                         >

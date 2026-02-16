@@ -163,7 +163,7 @@ export default function FeedbackPage() {
         <div className="flex items-center justify-center h-[calc(100vh-80px)]">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Interview Not Found</h2>
-            <Button color="primary" onPress={() => router.push("/dashboard")}>
+            <Button color="primary" className="cursor-pointer" onPress={() => router.push("/dashboard")}>
               Go to Dashboard
             </Button>
           </div>
@@ -192,7 +192,7 @@ export default function FeedbackPage() {
             size="sm"
             startContent={<ArrowLeftIcon size={18} />}
             onPress={() => router.push("/interviews/history")}
-            className="text-foreground/60 hover:text-foreground"
+            className="text-foreground/60 hover:text-foreground cursor-pointer"
           >
             Back to Interview History
           </Button>
@@ -224,12 +224,14 @@ export default function FeedbackPage() {
             <Button
               variant="flat"
               color="primary"
+              className="cursor-pointer"
               onPress={() => router.push("/interviews/history")}
             >
               View All Interviews
             </Button>
             <Button
               color="primary"
+              className="cursor-pointer"
               onPress={() => router.push("/interviews/setup")}
               startContent={<MicrophoneIcon size={18} />}
             >
@@ -517,6 +519,7 @@ export default function FeedbackPage() {
               <Button
                 color="primary"
                 size="lg"
+                className="cursor-pointer"
                 onPress={() => router.push("/interviews/setup")}
                 startContent={<MicrophoneIcon size={20} />}
               >

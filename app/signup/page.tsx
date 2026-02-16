@@ -274,7 +274,7 @@ export default function SignupPage() {
                 <Button
                   variant="bordered"
                   size="lg"
-                  className="w-full font-medium"
+                  className="w-full font-medium cursor-pointer"
                   startContent={<GoogleIcon size={20} />}
                   onPress={handleGoogleSignup}
                   isLoading={loadingBtnGoogle}
@@ -336,7 +336,7 @@ export default function SignupPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-foreground/40 hover:text-foreground transition-colors"
+                      className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeOffIcon size={18} />
@@ -388,7 +388,7 @@ export default function SignupPage() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="text-foreground/40 hover:text-foreground transition-colors"
+                      className="text-foreground/40 hover:text-foreground transition-colors cursor-pointer"
                     >
                       {showConfirmPassword ? (
                         <EyeOffIcon size={18} />
@@ -427,7 +427,7 @@ export default function SignupPage() {
                 <Button
                   color="primary"
                   size="lg"
-                  className="w-full font-semibold"
+                  className="w-full font-semibold cursor-pointer"
                   endContent={<ArrowRightIcon size={18} />}
                   onPress={handleSignup}
                   isLoading={loadingBtnSignup}

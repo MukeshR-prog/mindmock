@@ -54,6 +54,7 @@ export default function DashboardCard({
               size="sm"
               variant="flat"
               color="primary"
+              className="cursor-pointer"
               onPress={action.onClick}
             >
               {action.label}
