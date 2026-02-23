@@ -25,3 +25,4 @@ export { default as EyeIcon } from "./EyeIcon";
 export { default as EyeOffIcon } from "./EyeOffIcon";
 export { default as ZapIcon } from "./ZapIcon";
 export { default as AwardIcon } from "./AwardIcon";
+export { default as CameraIcon } from "./CameraIcon";
