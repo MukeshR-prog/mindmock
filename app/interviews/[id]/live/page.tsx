@@ -16,6 +16,7 @@ import {
   VolumeIcon,
   CheckCircleIcon,
   SparklesIcon,
+  CameraIcon,
 } from "@/components";
 
 export default function LiveInterviewPage() {
@@ -26,11 +27,18 @@ export default function LiveInterviewPage() {
   const recognitionRef = useRef<any>(null);
   const lastAnswerRef = useRef<string>("");
   const hasFetchedInitialQuestion = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [questionCount, setQuestionCount] = useState(1);
   const [isAnswering, setIsAnswering] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
+  
+  // Interview settings
+  const [voiceType, setVoiceType] = useState<string>("professional-female");
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const {
     setInterviewId,
@@ -51,12 +59,47 @@ export default function LiveInterviewPage() {
     }
   }, [user, authLoading, router]);
 
-  // Text-to-speech for AI questions
+  // Text-to-speech for AI questions with voice selection
   const speakQuestion = (text: string) => {
     if ("speechSynthesis" in window) {
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
+      
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
-      utterance.rate = 0.9;
+      
+      // Configure voice based on voiceType
+      const voices = speechSynthesis.getVoices();
+      
+      // Voice selection based on type
+      const voiceConfig: Record<string, { gender: string; rate: number; pitch: number }> = {
+        "professional-female": { gender: "female", rate: 0.9, pitch: 1.0 },
+        "professional-male": { gender: "male", rate: 0.85, pitch: 0.9 },
+        "friendly-female": { gender: "female", rate: 0.95, pitch: 1.1 },
+        "friendly-male": { gender: "male", rate: 0.95, pitch: 1.0 },
+      };
+      
+      const config = voiceConfig[voiceType] || voiceConfig["professional-female"];
+      
+      // Try to find a matching voice
+      const preferredVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("zira") || name.includes("samantha") || name.includes("victoria") || name.includes("karen") || name.includes("moira");
+        const isMale = name.includes("male") || name.includes("david") || name.includes("mark") || name.includes("alex") || name.includes("daniel");
+        
+        if (config.gender === "female") {
+          return isFemale && voice.lang.startsWith("en");
+        } else {
+          return isMale && voice.lang.startsWith("en");
+        }
+      });
+      
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+      
+      utterance.rate = config.rate;
+      utterance.pitch = config.pitch;
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       speechSynthesis.speak(utterance);
@@ -104,6 +147,82 @@ export default function LiveInterviewPage() {
       setIsLoadingQuestion(false);
     }
   };
+
+  // Fetch interview settings and initialize
+  useEffect(() => {
+    if (!id || !user) return;
+    
+    const interviewId = Array.isArray(id) ? id[0] : id;
+    
+    // Fetch interview settings
+    const fetchInterviewSettings = async () => {
+      try {
+        const res = await fetch(`/api/interviews/${interviewId}`);
+        if (res.ok) {
+          const interview = await res.json();
+          if (interview.voiceType) {
+            setVoiceType(interview.voiceType);
+          }
+          if (interview.cameraEnabled) {
+            setCameraEnabled(true);
+            // Initialize camera
+            initializeCamera();
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching interview settings:", error);
+      }
+    };
+    
+    fetchInterviewSettings();
+  }, [id, user]);
+
+  // Initialize camera
+  const initializeCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 320, height: 240, facingMode: "user" },
+        audio: false,
+      });
+      setCameraStream(stream);
+      setCameraError(null);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error: any) {
+      console.error("Camera access error:", error);
+      setCameraError(error.message || "Failed to access camera");
+    }
+  };
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  // Attach stream to video element when it changes
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  // Preload voices on mount
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      // Load voices
+      speechSynthesis.getVoices();
+      // Some browsers need this event
+      speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+      };
+    }
+  }, []);
 
   // Initial question - only fetch once when authenticated
   useEffect(() => {
@@ -264,6 +383,12 @@ export default function LiveInterviewPage() {
     // Stop any ongoing speech
     if ("speechSynthesis" in window) {
       speechSynthesis.cancel();
+    }
+
+    // Stop camera
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     }
 
     await fetch("/api/interviews/end", {
@@ -434,13 +559,65 @@ export default function LiveInterviewPage() {
             </Card>
           </motion.div>
 
-          {/* Transcript Sidebar */}
+          {/* Sidebar with Camera Preview and Transcript */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4"
           >
-            <Card className="bg-content1/50 backdrop-blur-sm border border-divider sticky top-24 max-h-[70vh] overflow-hidden">
+            {/* Camera Preview */}
+            {cameraEnabled && (
+              <Card className="bg-content1/50 backdrop-blur-sm border border-divider overflow-hidden">
+                <CardHeader className="px-4 pt-4 pb-0">
+                  <div className="flex items-center gap-2">
+                    <CameraIcon size={18} className="text-success" />
+                    <h3 className="text-sm font-semibold">Video Preview</h3>
+                    <div className="ml-auto flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                      <span className="text-xs text-success">Live</span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardBody className="p-4">
+                  {cameraError ? (
+                    <div className="aspect-video rounded-lg bg-content2 flex flex-col items-center justify-center text-foreground/60">
+                      <CameraIcon size={32} className="mb-2 opacity-50" />
+                      <p className="text-xs text-center px-4">{cameraError}</p>
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        className="mt-2 cursor-pointer"
+                        onPress={initializeCamera}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded-lg bg-black overflow-hidden relative">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover transform scale-x-[-1]"
+                      />
+                      {!cameraStream && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-content2">
+                          <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-foreground/50 text-center mt-2">
+                    Practice your body language and eye contact
+                  </p>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Transcript */}
+            <Card className="bg-content1/50 backdrop-blur-sm border border-divider max-h-[50vh] overflow-hidden">
               <CardHeader className="px-6 pt-6 pb-0">
                 <h3 className="text-lg font-semibold">Transcript</h3>
               </CardHeader>

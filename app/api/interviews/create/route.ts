@@ -18,6 +18,8 @@ export async function POST(req: Request) {
       selectedConcepts,
       conceptFocus,
       targetRole,
+      voiceType,
+      cameraEnabled,
     } = body;
 
     // Validate based on interview mode
@@ -57,6 +59,8 @@ export async function POST(req: Request) {
       interviewType,
       difficulty,
       interviewMode: interviewMode || "resume-based",
+      voiceType: voiceType || "professional-female",
+      cameraEnabled: cameraEnabled || false,
       answers: [],
     };
 

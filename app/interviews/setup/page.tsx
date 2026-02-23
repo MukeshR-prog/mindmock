@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Textarea, Input } from "@heroui/input";
@@ -20,6 +20,8 @@ import {
   RocketIcon,
   BrainIcon,
   ArrowLeftIcon,
+  CameraIcon,
+  VolumeIcon,
 } from "@/components";
 
 // Core CS Concepts for concept-based interviews
@@ -71,6 +73,38 @@ const targetRoles = [
   { key: "custom", label: "Other (Custom)" },
 ];
 
+// Voice types for AI interviewer
+const voiceTypes = [
+  { 
+    key: "professional-female", 
+    label: "Professional Female", 
+    icon: "👩‍💼", 
+    description: "Clear, authoritative tone",
+    preview: "Hello, I'm your professional interviewer. Let's begin with your experience."
+  },
+  { 
+    key: "professional-male", 
+    label: "Professional Male", 
+    icon: "👨‍💼", 
+    description: "Formal, confident delivery",
+    preview: "Welcome to your interview. Tell me about your technical background."
+  },
+  { 
+    key: "friendly-female", 
+    label: "Friendly Female", 
+    icon: "👩‍🏫", 
+    description: "Warm, encouraging style",
+    preview: "Hi there! I'm excited to learn more about you. Don't worry, just be yourself!"
+  },
+  { 
+    key: "friendly-male", 
+    label: "Friendly Male", 
+    icon: "👨‍🏫", 
+    description: "Casual, supportive approach",
+    preview: "Hey! Great to meet you. Let's have a relaxed conversation about your skills."
+  },
+];
+
 export default function InterviewSetupPage() {
   const router = useRouter();
   const { selectedResume, setSelectedResume } = useResumeStore();
@@ -92,11 +126,181 @@ export default function InterviewSetupPage() {
   const [targetRole, setTargetRole] = useState("sde");
   const [customRole, setCustomRole] = useState("");
 
+  // Interview experience settings
+  const [voiceType, setVoiceType] = useState("professional-female");
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState<string | null>(null);
+  
+  // Camera preview states
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    cameraStreamRef.current = cameraStream;
+  }, [cameraStream]);
+
+  // Initialize/cleanup camera when cameraEnabled changes
+  useEffect(() => {
+    if (cameraEnabled) {
+      initializeCamera();
+    } else {
+      // Stop camera when disabled
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+        setCameraStream(null);
+      }
+      setCameraError(null);
+      setIsVideoReady(false);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraEnabled]);
+
+  // Attach stream to video element when stream or video element changes
+  useEffect(() => {
+    const attachStream = async () => {
+      if (videoRef.current && cameraStream) {
+        videoRef.current.srcObject = cameraStream;
+        try {
+          await videoRef.current.play();
+          setIsVideoReady(true);
+        } catch (err) {
+          console.log("Video play was interrupted, will auto-play");
+        }
+      }
+    };
+    attachStream();
+  }, [cameraStream]);
+
+  // Initialize camera
+  const initializeCamera = async () => {
+    setIsCameraLoading(true);
+    setCameraError(null);
+    setIsVideoReady(false);
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+        audio: false,
+      });
+      setCameraStream(stream);
+      
+      // If video element is already mounted, attach stream directly
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+          setIsVideoReady(true);
+        } catch (err) {
+          console.log("Video play was interrupted");
+        }
+      }
+    } catch (error: any) {
+      console.error("Camera access error:", error);
+      setCameraError(
+        error.name === "NotAllowedError" 
+          ? "Camera access denied. Please allow camera access in your browser settings."
+          : error.name === "NotFoundError"
+          ? "No camera found. Please connect a camera and try again."
+          : "Failed to access camera. Please check your permissions."
+      );
+    } finally {
+      setIsCameraLoading(false);
+    }
+  };
+
+  // Handle video element ready
+  const handleVideoCanPlay = () => {
+    setIsVideoReady(true);
+    setIsCameraLoading(false);
+  };
+
+  // Voice preview function
+  const previewVoice = (voiceKey: string, previewText: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent selecting the voice when clicking preview
+    
+    if ("speechSynthesis" in window) {
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
+      
+      // If clicking the same voice that's playing, just stop
+      if (isPreviewPlaying === voiceKey) {
+        setIsPreviewPlaying(null);
+        return;
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(previewText);
+      utterance.lang = "en-US";
+      
+      const voices = speechSynthesis.getVoices();
+      
+      const voiceConfig: Record<string, { gender: string; rate: number; pitch: number }> = {
+        "professional-female": { gender: "female", rate: 0.9, pitch: 1.0 },
+        "professional-male": { gender: "male", rate: 0.85, pitch: 0.9 },
+        "friendly-female": { gender: "female", rate: 0.95, pitch: 1.1 },
+        "friendly-male": { gender: "male", rate: 0.95, pitch: 1.0 },
+      };
+      
+      const config = voiceConfig[voiceKey] || voiceConfig["professional-female"];
+      
+      const preferredVoice = voices.find(voice => {
+        const name = voice.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("zira") || name.includes("samantha") || name.includes("victoria") || name.includes("karen") || name.includes("moira");
+        const isMale = name.includes("male") || name.includes("david") || name.includes("mark") || name.includes("alex") || name.includes("daniel");
+        
+        if (config.gender === "female") {
+          return isFemale && voice.lang.startsWith("en");
+        } else {
+          return isMale && voice.lang.startsWith("en");
+        }
+      });
+      
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+      
+      utterance.rate = config.rate;
+      utterance.pitch = config.pitch;
+      utterance.onstart = () => setIsPreviewPlaying(voiceKey);
+      utterance.onend = () => setIsPreviewPlaying(null);
+      utterance.onerror = () => setIsPreviewPlaying(null);
+      
+      speechSynthesis.speak(utterance);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
     }
   }, [user, authLoading, router]);
+
+  // Preload voices for preview
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      speechSynthesis.getVoices();
+      speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+      };
+    }
+    
+    // Cleanup: stop any playing preview when component unmounts
+    return () => {
+      if ("speechSynthesis" in window) {
+        speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   const toggleConcept = (conceptKey: string) => {
     setSelectedConcepts(prev =>
@@ -116,6 +320,8 @@ export default function InterviewSetupPage() {
       interviewType,
       difficulty,
       interviewMode: interviewMode === "resume" ? "resume-based" : "concept-based",
+      voiceType,
+      cameraEnabled,
     };
 
     if (interviewMode === "resume") {
@@ -179,10 +385,10 @@ export default function InterviewSetupPage() {
   ];
 
   const difficultyLevels = [
-    { key: "junior", label: "Junior", color: "success" },
-    { key: "mid", label: "Mid-Level", color: "warning" },
-    { key: "senior", label: "Senior", color: "danger" },
-    { key: "stress", label: "Stress Mode", color: "secondary" },
+    { key: "junior", label: "Junior", color: "success", bgColor: "bg-success/20", borderColor: "border-success", textColor: "text-success", icon: "🌱" },
+    { key: "mid", label: "Mid-Level", color: "warning", bgColor: "bg-warning/20", borderColor: "border-warning", textColor: "text-warning", icon: "💪" },
+    { key: "senior", label: "Senior", color: "danger", bgColor: "bg-danger/20", borderColor: "border-danger", textColor: "text-danger", icon: "🔥" },
+    { key: "stress", label: "Stress Mode", color: "secondary", bgColor: "bg-purple-500/20", borderColor: "border-purple-500", textColor: "text-purple-500", icon: "⚡" },
   ];
 
   const canStartInterview = interviewMode === "resume" 
@@ -476,18 +682,200 @@ export default function InterviewSetupPage() {
                   {/* Difficulty Level */}
                   <div className="mb-6">
                     <p className="text-sm font-medium mb-3">Difficulty Level</p>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {difficultyLevels.map((level) => (
-                        <Chip
+                        <motion.div
                           key={level.key}
-                          color={level.color as any}
-                          variant={difficulty === level.key ? "solid" : "flat"}
-                          className="cursor-pointer"
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center ${
+                            difficulty === level.key
+                              ? `${level.borderColor} ${level.bgColor}`
+                              : "border-divider hover:border-foreground/30 bg-content2/30"
+                          }`}
                           onClick={() => setDifficulty(level.key)}
                         >
-                          {level.label}
-                        </Chip>
+                          <span className="text-2xl block mb-1">{level.icon}</span>
+                          <p className={`font-semibold text-sm ${difficulty === level.key ? level.textColor : ""}`}>
+                            {level.label}
+                          </p>
+                        </motion.div>
                       ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interview Experience Settings */}
+                <div className="pt-4 border-t border-divider">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center">
+                      <VolumeIcon size={16} className="text-secondary" />
+                    </div>
+                    <h4 className="font-medium">Interview Experience</h4>
+                  </div>
+
+                  {/* AI Voice Selection */}
+                  <div className="mb-6">
+                    <p className="text-sm font-medium mb-3">AI Interviewer Voice</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {voiceTypes.map((voice) => (
+                        <motion.div
+                          key={voice.key}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                            voiceType === voice.key
+                              ? "border-secondary bg-secondary/10"
+                              : "border-divider hover:border-secondary/50"
+                          }`}
+                          onClick={() => setVoiceType(voice.key)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{voice.icon}</span>
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{voice.label}</p>
+                              <p className="text-xs text-foreground/60">{voice.description}</p>
+                            </div>
+                            {/* Preview Button */}
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => previewVoice(voice.key, voice.preview, e)}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                isPreviewPlaying === voice.key
+                                  ? "bg-secondary text-white"
+                                  : "bg-content2 hover:bg-secondary/20 text-foreground/60 hover:text-secondary"
+                              }`}
+                              title="Preview voice"
+                            >
+                              {isPreviewPlaying === voice.key ? (
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                                </svg>
+                              ) : (
+                                <VolumeIcon size={16} />
+                              )}
+                            </motion.button>
+                            {voiceType === voice.key && (
+                              <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Camera Toggle */}
+                  <div className="mb-6">
+                    <p className="text-sm font-medium mb-3">Video Interview Mode</p>
+                    <div className={`rounded-xl border-2 transition-all ${
+                      cameraEnabled
+                        ? "border-success bg-success/10"
+                        : "border-divider hover:border-success/50"
+                    }`}>
+                      <motion.div
+                        whileHover={{ scale: 1.005 }}
+                        whileTap={{ scale: 0.995 }}
+                        className="p-4 cursor-pointer"
+                        onClick={() => setCameraEnabled(!cameraEnabled)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                            cameraEnabled ? "bg-success/20" : "bg-content2"
+                          }`}>
+                            <CameraIcon size={24} className={cameraEnabled ? "text-success" : "text-foreground/60"} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium">Enable Camera</p>
+                            <p className="text-xs text-foreground/60">
+                              Practice with video to simulate real interview experience
+                            </p>
+                          </div>
+                          <div className={`w-12 h-7 rounded-full p-1 transition-colors ${
+                            cameraEnabled ? "bg-success" : "bg-content3"
+                          }`}>
+                            <motion.div
+                              className="w-5 h-5 rounded-full bg-white shadow-md"
+                              animate={{ x: cameraEnabled ? 20 : 0 }}
+                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                      
+                      {/* Camera Preview */}
+                      {cameraEnabled && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="px-4 pb-4"
+                        >
+                          <div className="pt-3 border-t border-success/20">
+                            <div className="aspect-video max-w-sm mx-auto rounded-xl overflow-hidden bg-black relative">
+                              {/* Loading State */}
+                              {(isCameraLoading || (!isVideoReady && !cameraError)) && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-content2 z-10">
+                                  <div className="text-center">
+                                    <div className="animate-spin w-8 h-8 border-2 border-success border-t-transparent rounded-full mx-auto mb-2" />
+                                    <p className="text-xs text-foreground/60">Starting camera...</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Error State */}
+                              {cameraError && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-content2 p-4 z-10">
+                                  <div className="text-center">
+                                    <CameraIcon size={32} className="mx-auto mb-2 text-foreground/40" />
+                                    <p className="text-xs text-danger mb-2">{cameraError}</p>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <Button
+                                        size="sm"
+                                        variant="flat"
+                                        color="success"
+                                        className="cursor-pointer"
+                                        onPress={() => initializeCamera()}
+                                      >
+                                        Try Again
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Video Element - Always render but show/hide */}
+                              <video
+                                ref={videoRef}
+                                autoPlay
+                                muted
+                                playsInline
+                                onCanPlay={handleVideoCanPlay}
+                                onLoadedMetadata={handleVideoCanPlay}
+                                className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity ${
+                                  isVideoReady && !cameraError ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              
+                              {/* Live Indicator */}
+                              {isVideoReady && !cameraError && (
+                                <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 px-2 py-1 rounded-full">
+                                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                                  <span className="text-xs text-white">Live</span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-xs text-foreground/50 text-center mt-2">
+                              Preview: This is how you'll appear during the interview
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -570,6 +958,21 @@ export default function InterviewSetupPage() {
                     <div className="p-3 rounded-xl bg-content2/50 text-center">
                       <p className="text-xs text-foreground/60 mb-1">Level</p>
                       <p className="font-medium text-sm capitalize">{difficulty}</p>
+                    </div>
+                  </div>
+
+                  {/* Voice & Camera Settings */}
+                  <div className="p-4 rounded-xl bg-content2/50">
+                    <p className="text-xs text-foreground/60 mb-2">Experience</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm">{voiceTypes.find(v => v.key === voiceType)?.icon}</span>
+                      <span className="text-sm font-medium">{voiceTypes.find(v => v.key === voiceType)?.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CameraIcon size={14} className={cameraEnabled ? "text-success" : "text-foreground/40"} />
+                      <span className={`text-sm ${cameraEnabled ? "text-success" : "text-foreground/60"}`}>
+                        {cameraEnabled ? "Camera On" : "Camera Off"}
+                      </span>
                     </div>
                   </div>
                 </div>

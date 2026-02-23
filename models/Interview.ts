@@ -38,6 +38,14 @@ const InterviewSchema = new Schema(
     selectedConcepts: [{ type: String }], // OS, CN, DBMS, OOP, etc.
     conceptFocus: { type: String }, // Primary concept focus
 
+    // Interview experience settings
+    voiceType: { 
+      type: String, 
+      enum: ["professional-male", "professional-female", "friendly-male", "friendly-female"], 
+      default: "professional-female" 
+    },
+    cameraEnabled: { type: Boolean, default: false },
+
     transcript: String,
     answers: [AnswerSchema],
     overallScore: Number,
