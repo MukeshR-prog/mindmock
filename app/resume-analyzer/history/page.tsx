@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
-import { Spinner } from "@heroui/spinner";
 import { Progress } from "@heroui/progress";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
@@ -16,6 +15,7 @@ import {
   ResumeIcon,
   ArrowRightIcon,
   ArrowLeftIcon,
+  ResumeHistorySkeleton,
 } from "@/components";
 
 interface ResumeItem {
@@ -80,9 +80,7 @@ export default function ResumeHistoryPage() {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-          <Spinner size="lg" color="primary" />
-        </div>
+        <ResumeHistorySkeleton />
       </div>
     );
   }
