@@ -8,7 +8,6 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input, Textarea } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { Chip } from "@heroui/chip";
-import { Spinner } from "@heroui/spinner";
 import { Progress } from "@heroui/progress";
 import { motion } from "framer-motion";
 import {
@@ -18,6 +17,7 @@ import {
   CheckCircleIcon,
   SparklesIcon,
   ArrowLeftIcon,
+  ResumeAnalyzerSkeleton,
 } from "@/components";
 
 export default function ResumeAnalyzerPage() {
@@ -93,9 +93,7 @@ export default function ResumeAnalyzerPage() {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-          <Spinner size="lg" color="primary" />
-        </div>
+        <ResumeAnalyzerSkeleton />
       </div>
     );
   }
