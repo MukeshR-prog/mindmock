@@ -22,6 +22,7 @@ import {
   ArrowLeftIcon,
   CameraIcon,
   VolumeIcon,
+  InterviewSetupSkeleton,
 } from "@/components";
 
 // Core CS Concepts for concept-based interviews
@@ -394,6 +395,16 @@ export default function InterviewSetupPage() {
   const canStartInterview = interviewMode === "resume" 
     ? (selectedResume && jobDescription)
     : selectedConcepts.length > 0;
+
+  // Show skeleton while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardNavbar />
+        <InterviewSetupSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

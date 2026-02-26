@@ -2,6 +2,10 @@
 export { default as DashboardSkeleton } from "./DashboardSkeleton";
 export { default as ResumeHistorySkeleton } from "./ResumeHistorySkeleton";
 export { default as ResumeAnalyzerSkeleton } from "./ResumeAnalyzerSkeleton";
+export { default as InterviewSetupSkeleton } from "./InterviewSetupSkeleton";
+export { default as InterviewHistorySkeleton } from "./InterviewHistorySkeleton";
+export { default as InterviewLiveSkeleton } from "./InterviewLiveSkeleton";
+export { default as InterviewFeedbackSkeleton } from "./InterviewFeedbackSkeleton";
 export { default as WelcomeSection } from "./WelcomeSection";
 export { default as PerformanceChart } from "./PerformanceChart";
 export { default as SkillsRadarChart } from "./SkillsRadarChart";

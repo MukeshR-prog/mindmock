@@ -6,7 +6,6 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { Progress } from "@heroui/progress";
-import { Spinner } from "@heroui/spinner";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -19,6 +18,7 @@ import {
   TrendingIcon,
   MicrophoneIcon,
   ArrowLeftIcon,
+  InterviewFeedbackSkeleton,
 } from "@/components";
 
 interface Answer {
@@ -88,9 +88,7 @@ export default function FeedbackPage() {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-          <Spinner size="lg" color="primary" />
-        </div>
+        <InterviewFeedbackSkeleton />
       </div>
     );
   }
@@ -149,9 +147,7 @@ export default function FeedbackPage() {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-          <Spinner size="lg" color="primary" />
-        </div>
+        <InterviewFeedbackSkeleton />
       </div>
     );
   }
