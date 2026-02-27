@@ -1,0 +1,108 @@
+"use client";
+
+import { Card, CardBody } from "@heroui/card";
+import { Skeleton } from "@heroui/skeleton";
+import { motion } from "framer-motion";
+
+const StatCardSkeleton = ({ delay = 0 }: { delay?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay }}
+  >
+    <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+      <CardBody className="p-4 text-center">
+        <Skeleton className="h-8 w-16 mx-auto rounded-lg mb-2" />
+        <Skeleton className="h-4 w-24 mx-auto rounded-lg" />
+      </CardBody>
+    </Card>
+  </motion.div>
+);
+
+const InterviewCardSkeleton = ({ delay = 0 }: { delay?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3, delay }}
+  >
+    <Card className="bg-content1/50 backdrop-blur-sm border border-divider">
+      <CardBody className="p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            {/* Icon placeholder */}
+            <Skeleton className="w-12 h-12 rounded-xl flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              {/* Title */}
+              <Skeleton className="h-5 w-40 rounded-lg mb-2" />
+              {/* Date */}
+              <Skeleton className="h-4 w-32 rounded-lg mb-2" />
+              {/* Chips */}
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+            </div>
+          </div>
+          {/* Score and button */}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <Skeleton className="h-3 w-10 rounded-lg mb-1" />
+              <Skeleton className="h-7 w-14 rounded-lg" />
+            </div>
+            <Skeleton className="h-9 w-28 rounded-lg" />
+          </div>
+        </div>
+      </CardBody>
+    </Card>
+  </motion.div>
+);
+
+export default function InterviewHistorySkeleton() {
+  return (
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Back Button Skeleton */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-4"
+      >
+        <Skeleton className="h-8 w-40 rounded-lg" />
+      </motion.div>
+
+      {/* Header Skeleton */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
+      >
+        <div>
+          <Skeleton className="h-9 w-52 rounded-lg mb-2" />
+          <Skeleton className="h-5 w-72 rounded-lg" />
+        </div>
+        <Skeleton className="h-10 w-36 rounded-lg" />
+      </motion.div>
+
+      {/* Stats Overview Skeleton */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+      >
+        {[0, 1, 2, 3].map((i) => (
+          <StatCardSkeleton key={i} delay={i * 0.05} />
+        ))}
+      </motion.div>
+
+      {/* Interview List Skeleton */}
+      <div className="space-y-4">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <InterviewCardSkeleton key={i} delay={i * 0.05} />
+        ))}
+      </div>
+    </main>
+  );
+}

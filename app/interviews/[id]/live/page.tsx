@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
-import { Spinner } from "@heroui/spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
 import { useInterviewStore } from "@/store/interviewStore";
@@ -17,6 +16,7 @@ import {
   CheckCircleIcon,
   SparklesIcon,
   CameraIcon,
+  InterviewLiveSkeleton,
 } from "@/components";
 
 export default function LiveInterviewPage() {
@@ -243,9 +243,7 @@ export default function LiveInterviewPage() {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-          <Spinner size="lg" color="primary" />
-        </div>
+        <InterviewLiveSkeleton />
       </div>
     );
   }

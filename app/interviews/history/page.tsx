@@ -6,7 +6,6 @@ import { useAuthStore } from "@/store/authStore";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
-import { Spinner } from "@heroui/spinner";
 import { motion } from "framer-motion";
 import {
   DashboardNavbar,
@@ -15,6 +14,7 @@ import {
   ChartIcon,
   ArrowRightIcon,
   ArrowLeftIcon,
+  InterviewHistorySkeleton,
 } from "@/components";
 
 interface InterviewItem {
@@ -83,9 +83,7 @@ export default function InterviewHistoryPage() {
     return (
       <div className="min-h-screen bg-background">
         <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-          <Spinner size="lg" color="primary" />
-        </div>
+        <InterviewHistorySkeleton />
       </div>
     );
   }
