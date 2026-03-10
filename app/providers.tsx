@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { HeroUIProvider } from "@heroui/system";
+import { ToastProvider } from "@heroui/toast";
 
 import { auth } from "@/config/firebase";
 import { useAuthStore } from "@/store/authStore";
@@ -74,6 +75,7 @@ export default function Providers({
         enableSystem
         {...themeProps}
       >
+        <ToastProvider placement="top-right" />
         {children}
       </NextThemesProvider>
     </HeroUIProvider>
