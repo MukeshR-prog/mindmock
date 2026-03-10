@@ -1,0 +1,97 @@
+// MindMock - AI Mock Interview Platform
+// Render at: https://dbdiagram.io
+
+Project MindMock {
+  database_type: 'MongoDB'
+}
+
+// =====================================================
+// CORE TABLES
+// =====================================================
+
+Table users {
+  _id ObjectId [pk]
+  firebaseUid String [unique, not null]
+  email String [not null]
+  name String
+  provider String [note: 'google | password']
+  totalInterviews Number
+  avgScore Number
+  createdAt DateTime
+}
+
+Table interviews {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > users._id, not null]
+  resumeId ObjectId [ref: > resumes._id]
+  status String [note: 'created | in-progress | completed']
+  targetRole String
+  interviewType String [note: 'technical | behavioral | mixed']
+  difficulty String [note: 'junior | mid | senior']
+  overallScore Number
+  createdAt DateTime
+}
+
+Table interview_answers {
+  _id ObjectId [pk]
+  interviewId ObjectId [ref: > interviews._id, not null]
+  question String
+  answer String
+  relevanceScore Number
+  confidenceScore Number
+  starScore Number
+  feedback String
+}
+
+Table resumes {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > users._id, not null]
+  fileName String
+  targetRole String [not null]
+  experienceLevel String [note: 'fresher | junior | mid | senior']
+  atsScore Number
+  matchedKeywords String[]
+  missingKeywords String[]
+  createdAt DateTime
+}
+
+// =====================================================
+// QUESTION BANK
+// =====================================================
+
+Table questions {
+  _id ObjectId [pk]
+  categoryId ObjectId [ref: > question_categories._id]
+  questionText String [not null]
+  questionType String [note: 'technical | behavioral']
+  difficulty String [note: 'easy | medium | hard']
+  concept String [note: 'OS | CN | DBMS | OOP | DSA']
+}
+
+Table question_categories {
+  _id ObjectId [pk]
+  name String [not null]
+  description String
+}
+
+// =====================================================
+// FEEDBACK
+// =====================================================
+
+Table interview_feedback {
+  _id ObjectId [pk]
+  interviewId ObjectId [ref: > interviews._id, not null]
+  userId ObjectId [ref: > users._id, not null]
+  overallRating Number
+  summary String
+  strengthAreas String[]
+  improvementAreas String[]
+}
+
+Table resume_suggestions {
+  _id ObjectId [pk]
+  resumeId ObjectId [ref: > resumes._id, not null]
+  section String [note: 'summary | experience | skills']
+  suggestedContent String
+  priority String [note: 'high | medium | low']
+}

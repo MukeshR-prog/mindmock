@@ -5,6 +5,7 @@ import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
 import { Link } from "@heroui/link";
+import { addToast } from "@heroui/toast";
 import { motion } from "framer-motion";
 
 import {
@@ -34,20 +35,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loadingBtnEmail, setLoadingBtnEmail] = useState(false);
   const [loadingBtnGoogle, setLoadingBtnGoogle] = useState(false);
-  const [error, setError] = useState("");
 
   const handleEmailLogin = async () => {
     try {
       setLoadingBtnEmail(true);
-      setError("");
       await signInWithEmailAndPassword(auth, email, password);
+      addToast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+        color: "success",
+      });
       router.push("/dashboard");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred during login");
-      }
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during login";
+      addToast({
+        title: "Login Failed",
+        description: errorMessage,
+        color: "danger",
+      });
     } finally {
       setLoadingBtnEmail(false);
     }
@@ -56,16 +61,21 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setLoadingBtnGoogle(true);
-      setError("");
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      addToast({
+        title: "Welcome back!",
+        description: "You have successfully logged in with Google.",
+        color: "success",
+      });
       router.push("/dashboard");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred during login");
-      }
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during login";
+      addToast({
+        title: "Login Failed",
+        description: errorMessage,
+        color: "danger",
+      });
     } finally {
       setLoadingBtnGoogle(false);
     }
@@ -142,16 +152,6 @@ export default function LoginPage() {
             </CardHeader>
 
             <CardBody className="px-6 pb-8 space-y-5">
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 rounded-lg bg-danger/10 border border-danger/20"
-                >
-                  <p className="text-sm text-danger">{error}</p>
-                </motion.div>
-              )}
-
               {/* Google Sign In */}
               <Button
                 variant="bordered"
