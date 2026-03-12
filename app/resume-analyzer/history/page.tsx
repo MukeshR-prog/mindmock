@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { Progress } from "@heroui/progress";
+import { Pagination } from "@heroui/pagination";
+import { Select, SelectItem } from "@heroui/select";
+import { Input } from "@heroui/input";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
 import { useResumeStore } from "@/store/resumeStore";
@@ -29,6 +32,8 @@ interface ResumeItem {
   createdAt: string;
 }
 
+const ITEMS_PER_PAGE_OPTIONS = [5, 10, 15, 20];
+
 export default function ResumeHistoryPage() {
   const { user, loading: authLoading } = useAuthStore();
   const { setSelectedResume } = useResumeStore();
@@ -36,6 +41,44 @@ export default function ResumeHistoryPage() {
 
   const [resumes, setResumes] = useState<ResumeItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [scoreFilter, setScoreFilter] = useState<string>("all");
+
+  // Filtered and paginated resumes
+  const filteredResumes = useMemo(() => {
+    return resumes.filter((resume) => {
+      // Search filter
+      const matchesSearch =
+        searchQuery === "" ||
+        resume.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (resume.targetRole?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+      // Score filter
+      let matchesScore = true;
+      if (scoreFilter === "high") matchesScore = resume.atsScore >= 80;
+      else if (scoreFilter === "medium") matchesScore = resume.atsScore >= 60 && resume.atsScore < 80;
+      else if (scoreFilter === "low") matchesScore = resume.atsScore < 60;
+
+      return matchesSearch && matchesScore;
+    });
+  }, [resumes, searchQuery, scoreFilter]);
+
+  const totalPages = Math.ceil(filteredResumes.length / itemsPerPage);
+  const paginatedResumes = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredResumes.slice(start, start + itemsPerPage);
+  }, [filteredResumes, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, scoreFilter, itemsPerPage]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -177,6 +220,56 @@ export default function ResumeHistoryPage() {
           </motion.div>
         )}
 
+        {/* Filters Section */}
+        {resumes.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="flex flex-col sm:flex-row gap-4 mb-6"
+          >
+            <Input
+              placeholder="Search by file name or role..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              className="flex-1"
+              size="sm"
+              isClearable
+              onClear={() => setSearchQuery("")}
+            />
+            <Select
+              label="Score Filter"
+              selectedKeys={[scoreFilter]}
+              onChange={(e) => setScoreFilter(e.target.value || "all")}
+              className="w-full sm:w-40"
+              size="sm"
+            >
+              <SelectItem key="all">All Scores</SelectItem>
+              <SelectItem key="high">High (80%+)</SelectItem>
+              <SelectItem key="medium">Medium (60-79%)</SelectItem>
+              <SelectItem key="low">Low (&lt;60%)</SelectItem>
+            </Select>
+            <Select
+              label="Per Page"
+              selectedKeys={[String(itemsPerPage)]}
+              onChange={(e) => setItemsPerPage(Number(e.target.value) || 10)}
+              className="w-full sm:w-32"
+              size="sm"
+            >
+              {ITEMS_PER_PAGE_OPTIONS.map((num) => (
+                <SelectItem key={String(num)}>{num}</SelectItem>
+              ))}
+            </Select>
+          </motion.div>
+        )}
+
+        {/* Results count */}
+        {resumes.length > 0 && filteredResumes.length !== resumes.length && (
+          <p className="text-sm text-foreground/60 mb-4">
+            Showing {filteredResumes.length} of {resumes.length} resumes
+          </p>
+        )}
+
         {/* Resume List */}
         {resumes.length === 0 ? (
           <motion.div
@@ -202,9 +295,36 @@ export default function ResumeHistoryPage() {
               Upload Resume
             </Button>
           </motion.div>
+        ) : filteredResumes.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center py-16"
+          >
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <ResumeIcon size={40} className="text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold mb-3">No Results Found</h2>
+            <p className="text-foreground/60 mb-6 max-w-md mx-auto">
+              Try adjusting your search or filter criteria.
+            </p>
+            <Button
+              color="primary"
+              variant="flat"
+              className="cursor-pointer"
+              onPress={() => {
+                setSearchQuery("");
+                setScoreFilter("all");
+              }}
+            >
+              Clear Filters
+            </Button>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
-            {resumes.map((resume, index) => (
+          <>
+            <div className="space-y-4">
+              {paginatedResumes.map((resume, index) => (
               <motion.div
                 key={resume._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -303,7 +423,27 @@ export default function ResumeHistoryPage() {
                 </Card>
               </motion.div>
             ))}
-          </div>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="flex justify-center mt-8"
+              >
+                <Pagination
+                  total={totalPages}
+                  page={currentPage}
+                  onChange={setCurrentPage}
+                  showControls
+                  color="primary"
+                  size="lg"
+                />
+              </motion.div>
+            )}
+          </>
         )}
       </main>
     </div>
