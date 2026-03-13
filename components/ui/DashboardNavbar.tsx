@@ -64,6 +64,8 @@ export default function DashboardNavbar() {
 
   const handleLogout = async () => {
     await signOut(auth);
+    // Clear the application JWT cookie
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   };
 

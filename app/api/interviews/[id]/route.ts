@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import Interview from "@/models/Interview";
+import { verifyAuth } from "@/utils/jwt";
 
 export async function GET(
   req: Request,
@@ -8,6 +9,12 @@ export async function GET(
 ) {
   try {
     await connectDB();
+
+    try {
+      await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { id } = await params;
     const interview = await Interview.findById(id).lean();

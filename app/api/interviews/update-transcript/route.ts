@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import Interview from "@/models/Interview";
+import { verifyAuth } from "@/utils/jwt";
 
 export async function POST(req: Request) {
   try {
     await connectDB();
+
+    try {
+      await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { interviewId, transcript } = await req.json();
 

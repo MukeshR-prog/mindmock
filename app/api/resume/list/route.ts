@@ -2,19 +2,23 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import Resume from "@/models/Resume";
 import User from "@/models/User";
+import { verifyAuth } from "@/utils/jwt";
 
 export async function GET(req: Request) {
   try {
     await connectDB();
 
-    const firebaseUid = req.headers.get("firebaseUid");
-    if (!firebaseUid) {
+    let auth;
+    try {
+      auth = await verifyAuth(req);
+    } catch {
       return NextResponse.json(
         { resumes: [], error: "Unauthorized" },
         { status: 401 }
       );
     }
 
+    const { firebaseUid } = auth;
     const user = await User.findOne({ firebaseUid });
     if (!user) {
       return NextResponse.json(

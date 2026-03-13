@@ -7,26 +7,33 @@ import User from "@/models/User";
 import mammoth from "mammoth";
 import { calculateIndustryStandardATS } from "@/utils/industryStandardATS";
 import { generateEnhancedResumeSuggestions } from "@/utils/enhancedResumeSuggestions";
+import { verifyAuth } from "@/utils/jwt";
 
 export async function POST(req: Request) {
   try {
     await connectDB();
 
+    let auth;
+    try {
+      auth = await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("resume") as File;
     const jobDescription = formData.get("jobDescription") as string;
-    const firebaseUid = formData.get("firebaseUid") as string;
     const targetRole = formData.get("targetRole") as string;
     const experienceLevel = formData.get("experienceLevel") as string;
 
-if (!targetRole || !experienceLevel) {
-  return NextResponse.json(
-    { error: "Missing role or experience" },
-    { status: 400 }
-  );
-}
+    if (!targetRole || !experienceLevel) {
+      return NextResponse.json(
+        { error: "Missing role or experience" },
+        { status: 400 }
+      );
+    }
 
-    if (!file || !jobDescription || !firebaseUid) {
+    if (!file || !jobDescription) {
       return NextResponse.json(
         { error: "Missing fields" },
         { status: 400 }
@@ -42,6 +49,7 @@ if (!targetRole || !experienceLevel) {
       );
     }
 
+    const { firebaseUid } = auth;
     const user = await User.findOne({ firebaseUid });
     if (!user) {
       return NextResponse.json(

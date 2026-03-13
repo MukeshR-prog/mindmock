@@ -3,14 +3,19 @@ import { connectDB } from "@/config/mongodb";
 import Interview from "@/models/Interview";
 import Resume from "@/models/Resume";
 import User from "@/models/User";
+import { verifyAuth } from "@/utils/jwt";
 
 export async function GET(req: Request) {
+  let auth;
+  try {
+    auth = await verifyAuth(req);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   await connectDB();
 
-  const firebaseUid = req.headers.get("firebaseUid");
-  if (!firebaseUid)
-    return NextResponse.json({}, { status: 401 });
-
+  const { firebaseUid } = auth;
   const user = await User.findOne({ firebaseUid });
   if (!user)
     return NextResponse.json({}, { status: 404 });

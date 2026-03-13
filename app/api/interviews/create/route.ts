@@ -2,14 +2,21 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import User from "@/models/User";
 import Interview from "@/models/Interview";
+import { verifyAuth } from "@/utils/jwt";
 
 export async function POST(req: Request) {
   try {
     await connectDB();
 
+    let auth;
+    try {
+      auth = await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
-      firebaseUid,
       resumeId,
       jobDescription,
       interviewType,
@@ -23,12 +30,7 @@ export async function POST(req: Request) {
     } = body;
 
     // Validate based on interview mode
-    if (!firebaseUid) {
-      return NextResponse.json(
-        { error: "Missing user ID" },
-        { status: 400 }
-      );
-    }
+    const { firebaseUid } = auth;
 
     // Resume-based requires resumeId and jobDescription
     if (interviewMode === "resume-based" && (!resumeId || !jobDescription)) {

@@ -6,6 +6,7 @@ import Groq from "groq-sdk";
 import { detectFillerWords } from "@/utils/fillerWords";
 import { answerEvaluationPrompt } from "@/utils/answerEvaluationPrompt";
 import { starEvaluationPrompt } from "@/utils/starPrompt";
+import { verifyAuth } from "@/utils/jwt";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY!,
@@ -14,6 +15,12 @@ const groq = new Groq({
 export async function POST(req: Request) {
   try {
     await connectDB();
+
+    try {
+      await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { interviewId, question, answer } = await req.json();
 

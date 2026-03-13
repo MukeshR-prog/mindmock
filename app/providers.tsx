@@ -41,14 +41,19 @@ export default function Providers({
       setUser(user);
       setLoading(false);
 
-      // 🔐 Create user in DB on first login
       if (user) {
         (async () => {
           try {
+            // Get Firebase ID token once — used for both calls below
+            const idToken = await user.getIdToken();
+
+            // 1. Sync user record in MongoDB (send Firebase token so the
+            //    server can verify the caller before upserting)
             await fetch("/api/users", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
               },
               body: JSON.stringify({
                 firebaseUid: user.uid,
@@ -57,10 +62,20 @@ export default function Providers({
                 provider: user.providerData[0]?.providerId,
               }),
             });
+
+            // 2. Exchange Firebase ID token for our signed JWT (stored as httpOnly cookie)
+            await fetch("/api/auth/token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ idToken }),
+            });
           } catch (error) {
             console.error("Failed to sync user:", error);
           }
         })();
+      } else {
+        // Clear the JWT cookie on sign-out
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
       }
     });
 
