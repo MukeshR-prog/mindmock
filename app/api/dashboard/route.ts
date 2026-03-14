@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   if (!user)
     return NextResponse.json({}, { status: 404 });
 
-  // Get user stats directly from database
+  // Get user stats directly from database 
   const {
     totalInterviews,
     avgScore,
