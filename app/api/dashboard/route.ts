@@ -4,6 +4,40 @@ import Interview from "@/models/Interview";
 import Resume from "@/models/Resume";
 import User from "@/models/User";
 
+function clampPercentage(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function calculateSkillAverages(interviews: any[]) {
+  let relevanceTotal = 0;
+  let confidenceTotal = 0;
+  let starTotal = 0;
+  let answerCount = 0;
+
+  interviews.forEach((interview) => {
+    interview.answers?.forEach((answer: any) => {
+      relevanceTotal += answer.relevanceScore || 0;
+      confidenceTotal += answer.confidenceScore || 0;
+      starTotal += answer.starScore || 0;
+      answerCount += 1;
+    });
+  });
+
+  if (!answerCount) {
+    return {
+      relevance: 0,
+      confidence: 0,
+      star: 0,
+    };
+  }
+
+  return {
+    relevance: clampPercentage((relevanceTotal / answerCount) * 10),
+    confidence: clampPercentage((confidenceTotal / answerCount) * 10),
+    star: clampPercentage((starTotal / answerCount) * 10),
+  };
+}
+
 export async function GET(req: Request) {
   await connectDB();
 
@@ -36,17 +70,36 @@ export async function GET(req: Request) {
     .sort({ createdAt: 1 })
     .lean();
 
+  const peerInterviews = await Interview.find({
+    userId: { $ne: user._id },
+    status: "completed",
+  })
+    .select("answers")
+    .lean();
+
   // Generate chart data from interviews
   const trendData = interviews.map((i: any, idx: number) => ({
     name: `I${idx + 1}`,
     score: i.overallScore || 0,
   }));
 
-  // Radar chart data from user averages
+  // Build skill scores from actual interview answers to avoid stale cached values.
+  const userSkillAverages = calculateSkillAverages(interviews);
+  const peerSkillAverages = calculateSkillAverages(peerInterviews);
+
+  const relevanceScore = userSkillAverages.relevance || clampPercentage(avgRelevance || 0);
+  const confidenceScore = userSkillAverages.confidence || clampPercentage(avgConfidence || 0);
+  const starScore = userSkillAverages.star || clampPercentage(avgStarScore || 0);
+
+  const relevanceAverage = peerSkillAverages.relevance || relevanceScore;
+  const confidenceAverage = peerSkillAverages.confidence || confidenceScore;
+  const starAverage = peerSkillAverages.star || starScore;
+
+  // Radar chart data from computed user skill averages
   const radarData = [
-    { skill: "Relevance", score: avgRelevance || 0 },
-    { skill: "Confidence", score: avgConfidence || 0 },
-    { skill: "STAR", score: avgStarScore || 0 },
+    { skill: "Relevance", score: relevanceScore },
+    { skill: "Confidence", score: confidenceScore },
+    { skill: "STAR", score: starScore },
   ];
 
   // Filler words pie chart
@@ -69,11 +122,11 @@ export async function GET(req: Request) {
       color: FILLER_COLORS[idx % FILLER_COLORS.length],
     }));
 
-  // Comparison chart (you vs average - simulated average for now)
+  // Comparison chart (you vs average candidates) from actual data.
   const comparisonData = [
-    { skill: "Relevance", you: avgRelevance || 0, average: 65 },
-    { skill: "Confidence", you: avgConfidence || 0, average: 60 },
-    { skill: "STAR Method", you: avgStarScore || 0, average: 55 },
+    { skill: "Relevance", you: relevanceScore, average: relevanceAverage },
+    { skill: "Confidence", you: confidenceScore, average: confidenceAverage },
+    { skill: "STAR Method", you: starScore, average: starAverage },
   ];
 
   return NextResponse.json({

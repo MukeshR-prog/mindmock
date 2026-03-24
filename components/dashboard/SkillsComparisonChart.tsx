@@ -24,6 +24,24 @@ interface SkillsComparisonChartProps {
   delay?: number;
 }
 
+function toSafePercent(value: unknown) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Math.max(0, Math.min(100, Math.round(num)));
+}
+
+function sanitizeComparisonData(data: ComparisonDataPoint[] | undefined) {
+  if (!Array.isArray(data)) return [];
+
+  return data
+    .filter((item) => item && typeof item.skill === "string" && item.skill.trim().length > 0)
+    .map((item) => ({
+      skill: item.skill.trim(),
+      you: toSafePercent(item.you),
+      average: toSafePercent(item.average),
+    }));
+}
+
 // Custom tooltip for better UX
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -96,15 +114,16 @@ const GradientBar = (props: any) => {
 };
 
 export default function SkillsComparisonChart({ data, delay = 0.9 }: SkillsComparisonChartProps) {
-  const hasData = data && data.length > 0;
+  const safeData = sanitizeComparisonData(data);
+  const hasData = safeData.length > 0;
 
   // Calculate statistics
   const stats = hasData
     ? {
-        ahead: data.filter((d) => d.you > d.average).length,
-        behind: data.filter((d) => d.you < d.average).length,
+        ahead: safeData.filter((d) => d.you > d.average).length,
+        behind: safeData.filter((d) => d.you < d.average).length,
         avgDiff: Math.round(
-          data.reduce((a, d) => a + (d.you - d.average), 0) / data.length
+          safeData.reduce((a, d) => a + (d.you - d.average), 0) / safeData.length
         ),
       }
     : { ahead: 0, behind: 0, avgDiff: 0 };
@@ -119,7 +138,7 @@ export default function SkillsComparisonChart({ data, delay = 0.9 }: SkillsCompa
         <div className="h-[320px] mt-2">
           <ResponsiveContainer width="100%" height="75%">
             <BarChart
-              data={data}
+              data={safeData}
               layout="vertical"
               margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
               barGap={4}
