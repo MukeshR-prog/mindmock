@@ -39,15 +39,40 @@ function calculateSkillAverages(interviews: any[]) {
 }
 
 export async function GET(req: Request) {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const firebaseUid = req.headers.get("firebaseUid");
-  if (!firebaseUid)
-    return NextResponse.json({}, { status: 401 });
+    const firebaseUid = req.headers.get("firebaseUid");
+    if (!firebaseUid) {
+      return NextResponse.json({
+        totalInterviews: 0,
+        avgScore: 0,
+        bestScore: 0,
+        improvementRate: 0,
+        avgAtsScore: 0,
+        totalResumes: 0,
+        trendData: [],
+        radarData: [],
+        fillerData: [],
+        comparisonData: [],
+      }, { status: 401 });
+    }
 
-  const user = await User.findOne({ firebaseUid });
-  if (!user)
-    return NextResponse.json({}, { status: 404 });
+    const user = await User.findOne({ firebaseUid });
+    if (!user) {
+      return NextResponse.json({
+        totalInterviews: 0,
+        avgScore: 0,
+        bestScore: 0,
+        improvementRate: 0,
+        avgAtsScore: 0,
+        totalResumes: 0,
+        trendData: [],
+        radarData: [],
+        fillerData: [],
+        comparisonData: [],
+      }, { status: 404 });
+    }
 
   // Get user stats directly from database 
   const {
@@ -87,13 +112,15 @@ export async function GET(req: Request) {
   const userSkillAverages = calculateSkillAverages(interviews);
   const peerSkillAverages = calculateSkillAverages(peerInterviews);
 
-  const relevanceScore = userSkillAverages.relevance || clampPercentage(avgRelevance || 0);
-  const confidenceScore = userSkillAverages.confidence || clampPercentage(avgConfidence || 0);
-  const starScore = userSkillAverages.star || clampPercentage(avgStarScore || 0);
+  // Use calculated scores if available, otherwise fall back to user stats
+  const relevanceScore = userSkillAverages.relevance > 0 ? userSkillAverages.relevance : clampPercentage(avgRelevance || 0);
+  const confidenceScore = userSkillAverages.confidence > 0 ? userSkillAverages.confidence : clampPercentage(avgConfidence || 0);
+  const starScore = userSkillAverages.star > 0 ? userSkillAverages.star : clampPercentage(avgStarScore || 0);
 
-  const relevanceAverage = peerSkillAverages.relevance || relevanceScore;
-  const confidenceAverage = peerSkillAverages.confidence || confidenceScore;
-  const starAverage = peerSkillAverages.star || starScore;
+  // Use peer averages, or user scores if peer data doesn't exist
+  const relevanceAverage = peerSkillAverages.relevance > 0 ? peerSkillAverages.relevance : relevanceScore;
+  const confidenceAverage = peerSkillAverages.confidence > 0 ? peerSkillAverages.confidence : confidenceScore;
+  const starAverage = peerSkillAverages.star > 0 ? peerSkillAverages.star : starScore;
 
   // Radar chart data from computed user skill averages
   const radarData = [
@@ -102,7 +129,7 @@ export async function GET(req: Request) {
     { skill: "STAR", score: starScore },
   ];
 
-  // Filler words pie chart
+  // Filler words pie chart - only if we have data
   const fillerCount: Record<string, number> = {};
   const FILLER_COLORS = ["#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444"];
   
@@ -114,13 +141,15 @@ export async function GET(req: Request) {
     });
   });
 
-  const fillerData = Object.keys(fillerCount)
-    .slice(0, 6)
-    .map((k, idx) => ({
-      name: k,
-      value: fillerCount[k],
-      color: FILLER_COLORS[idx % FILLER_COLORS.length],
-    }));
+  const fillerData = Object.keys(fillerCount).length > 0
+    ? Object.keys(fillerCount)
+        .slice(0, 6)
+        .map((k, idx) => ({
+          name: k,
+          value: fillerCount[k],
+          color: FILLER_COLORS[idx % FILLER_COLORS.length],
+        }))
+    : [];
 
   // Comparison chart (you vs average candidates) from actual data.
   const comparisonData = [
@@ -144,4 +173,20 @@ export async function GET(req: Request) {
     fillerData,
     comparisonData,
   });
+  } catch (error) {
+    console.error("DASHBOARD API ERROR:", error);
+    return NextResponse.json({
+      totalInterviews: 0,
+      avgScore: 0,
+      bestScore: 0,
+      improvementRate: 0,
+      avgAtsScore: 0,
+      totalResumes: 0,
+      trendData: [],
+      radarData: [],
+      fillerData: [],
+      comparisonData: [],
+      error: "Failed to fetch dashboard data",
+    }, { status: 500 });
+  }
 }

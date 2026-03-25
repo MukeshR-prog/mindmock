@@ -25,10 +25,23 @@ export async function GET(req: Request) {
 
     const resumes = await Resume.find({ userId: user._id })
       .sort({ createdAt: -1 })
-      .select("fileName targetRole experienceLevel atsScore matchedKeywords missingKeywords createdAt");
+      .select("_id fileName targetRole experienceLevel atsScore matchedKeywords missingKeywords createdAt");
 
-    return NextResponse.json({ resumes });
+    // Ensure all required fields are present with proper defaults
+    const validatedResumes = resumes.map((resume: any) => ({
+      _id: resume._id,
+      fileName: resume.fileName || "Untitled Resume",
+      targetRole: resume.targetRole || "Not specified",
+      experienceLevel: resume.experienceLevel || "fresher",
+      atsScore: Math.max(0, Math.min(100, resume.atsScore || 0)),
+      matchedKeywords: Array.isArray(resume.matchedKeywords) ? resume.matchedKeywords : [],
+      missingKeywords: Array.isArray(resume.missingKeywords) ? resume.missingKeywords : [],
+      createdAt: resume.createdAt || new Date().toISOString(),
+    }));
+
+    return NextResponse.json({ resumes: validatedResumes });
   } catch (error) {
+    console.error("RESUME LIST ERROR:", error);
     return NextResponse.json(
       { resumes: [], error: "Failed to fetch resumes" },
       { status: 500 }
