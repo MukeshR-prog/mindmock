@@ -293,7 +293,7 @@ export default function SignupPage() {
                   type="text"
                   label="Full Name"
                   placeholder="Enter your name"
-                  variant="bordered"
+                  variant="flat"
                   size="lg"
                   startContent={
                     <UserIcon className="text-foreground/40" size={18} />
@@ -301,7 +301,8 @@ export default function SignupPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   classNames={{
-                    inputWrapper: "bg-content2/50",
+                    inputWrapper: "bg-content2/50 !border-0 !outline-0",
+                    input: "!border-0 !outline-0",
                   }}
                 />
 
@@ -310,7 +311,7 @@ export default function SignupPage() {
                   type="email"
                   label="Email"
                   placeholder="Enter your email"
-                  variant="bordered"
+                  variant="flat"
                   size="lg"
                   startContent={
                     <MailIcon className="text-foreground/40" size={18} />
@@ -318,7 +319,8 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   classNames={{
-                    inputWrapper: "bg-content2/50",
+                    inputWrapper: "bg-content2/50 !border-0 !outline-0",
+                    input: "!border-0 !outline-0",
                   }}
                 />
 
@@ -327,7 +329,7 @@ export default function SignupPage() {
                   type={showPassword ? "text" : "password"}
                   label="Password"
                   placeholder="Create a password"
-                  variant="bordered"
+                  variant="flat"
                   size="lg"
                   startContent={
                     <LockIcon className="text-foreground/40" size={18} />
@@ -348,7 +350,8 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   classNames={{
-                    inputWrapper: "bg-content2/50",
+                    inputWrapper: "bg-content2/50 !border-0 !outline-0",
+                    input: "!border-0 !outline-0",
                   }}
                 />
 
@@ -379,7 +382,7 @@ export default function SignupPage() {
                   type={showConfirmPassword ? "text" : "password"}
                   label="Confirm Password"
                   placeholder="Confirm your password"
-                  variant="bordered"
+                  variant="flat"
                   size="lg"
                   startContent={
                     <LockIcon className="text-foreground/40" size={18} />
@@ -400,7 +403,8 @@ export default function SignupPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   classNames={{
-                    inputWrapper: "bg-content2/50",
+                    inputWrapper: "bg-content2/50 !border-0 !outline-0",
+                    input: "!border-0 !outline-0",
                   }}
                 />
 

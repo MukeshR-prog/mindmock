@@ -41,10 +41,30 @@ html {
   color: hsl(var(--heroui-foreground));
 }
 
-/* Focus Visible */
-*:focus-visible {
+/* Focus Visible - Exclude input elements */
+*:focus-visible:not(input, textarea, [role="textbox"]) {
   outline: 2px solid hsl(var(--heroui-primary));
   outline-offset: 2px;
+}
+
+/* Input Focus - Remove outline */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* Remove Input Borders */
+input,
+textarea,
+.heroui-input__input-wrapper,
+[data-slot="input-wrapper"] {
+  border: none !important;
+  background: transparent !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--heroui-foreground) / 0.5);
 }
 
 /* ============================================
