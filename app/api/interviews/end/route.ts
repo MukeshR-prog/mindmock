@@ -57,10 +57,17 @@ async function updateUserStats(userId: string) {
   const bestScore = Math.max(...scores);
 
   // Calculate improvement rate
-  const improvementRate =
-    scores.length > 1 && scores[0] > 0
-      ? Math.round(((scores[scores.length - 1] - scores[0]) / scores[0]) * 100)
-      : 0;
+  let improvementRate = 0;
+  if (scores.length > 1) {
+    const firstScore = scores[0];
+    const lastScore = scores[scores.length - 1];
+    if (firstScore > 0) {
+      improvementRate = Math.round(((lastScore - firstScore) / firstScore) * 100);
+    } else if (lastScore > firstScore) {
+      // If first score is 0 but last score is positive, show 100% improvement
+      improvementRate = 100;
+    }
+  }
 
   // Calculate skill averages
   let relevance = 0, confidence = 0, star = 0, totalAnswers = 0;

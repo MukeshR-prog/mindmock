@@ -4,7 +4,8 @@ import Interview from "@/models/Interview";
 import User from "@/models/User";
 
 export async function GET(req: Request) {
-  await connectDB();
+  try {
+    await connectDB();
 
   const firebaseUid = req.headers.get("firebaseUid");
   if (!firebaseUid) {
@@ -16,9 +17,27 @@ export async function GET(req: Request) {
     return NextResponse.json({ interviews: [] }, { status: 404 });
   }
 
-  const interviews = await Interview.find({ userId: user._id })
-    .sort({ createdAt: -1 })
-    .select("createdAt status targetRole overallScore interviewType difficulty");
+    const interviews = await Interview.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .select("_id createdAt status targetRole overallScore interviewType difficulty");
 
-  return NextResponse.json({ interviews });
+    // Ensure all required fields are present with proper defaults
+    const validatedInterviews = interviews.map((interview: any) => ({
+      _id: interview._id,
+      createdAt: interview.createdAt || new Date().toISOString(),
+      status: interview.status || "created",
+      targetRole: interview.targetRole || "General Interview",
+      overallScore: interview.overallScore ? Math.max(0, Math.min(100, interview.overallScore)) : null,
+      interviewType: interview.interviewType || "mixed",
+      difficulty: interview.difficulty || "junior",
+    }));
+
+    return NextResponse.json({ interviews: validatedInterviews });
+  } catch (error) {
+    console.error("INTERVIEWS LIST ERROR:", error);
+    return NextResponse.json(
+      { interviews: [], error: "Failed to fetch interviews" },
+      { status: 500 }
+    );
+  }
 }
