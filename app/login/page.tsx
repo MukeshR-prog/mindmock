@@ -175,7 +175,7 @@ export default function LoginPage() {
                 type="email"
                 label="Email"
                 placeholder="Enter your email"
-                variant="bordered"
+                variant="flat"
                 size="lg"
                 startContent={
                   <MailIcon className="text-foreground/40" size={18} />
@@ -183,7 +183,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 classNames={{
-                  inputWrapper: "bg-content2/50",
+                  inputWrapper: "bg-content2/50 !border-0 !outline-0",
+                  input: "!border-0 !outline-0",
                 }}
               />
 
@@ -192,7 +193,7 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 label="Password"
                 placeholder="Enter your password"
-                variant="bordered"
+                variant="flat"
                 size="lg"
                 startContent={
                   <LockIcon className="text-foreground/40" size={18} />
@@ -213,7 +214,8 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 classNames={{
-                  inputWrapper: "bg-content2/50",
+                  inputWrapper: "bg-content2/50 !border-0 !outline-0",
+                  input: "!border-0 !outline-0",
                 }}
               />
 
