@@ -26,6 +26,7 @@ export default function LiveInterviewPage() {
   const forceStopRef = useRef(false);
   const recognitionRef = useRef<any>(null);
   const lastAnswerRef = useRef<string>("");
+  const accumulatedFinalRef = useRef<string>("");
   const hasFetchedInitialQuestion = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [questionCount, setQuestionCount] = useState(1);
@@ -255,38 +256,36 @@ export default function LiveInterviewPage() {
     }
     forceStopRef.current = false;
     setIsAnswering(true);
+    lastAnswerRef.current = "";
+    accumulatedFinalRef.current = "";
+    setCurrentAnswer("");
 
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.lang = "en-US";
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    let finalTranscript = "";
-    let interimTranscript = "";
-
     recognition.onstart = () => {
       startListening();
-      finalTranscript = "";
-      interimTranscript = "";
-      setCurrentAnswer("");
     };
 
     recognition.onresult = (event: any) => {
       if (forceStopRef.current) return;
-      
-      finalTranscript = "";
-      interimTranscript = "";
-      
-      for (let i = 0; i < event.results.length; i++) {
+
+      let interimTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
+        const chunk = result[0].transcript.trim();
+
         if (result.isFinal) {
-          finalTranscript += result[0].transcript + " ";
+          accumulatedFinalRef.current = `${accumulatedFinalRef.current} ${chunk}`.trim();
         } else {
-          interimTranscript += result[0].transcript;
+          interimTranscript += `${chunk} `;
         }
       }
-      
-      const fullAnswer = (finalTranscript + interimTranscript).trim();
+
+      const fullAnswer = `${accumulatedFinalRef.current} ${interimTranscript}`.trim();
       lastAnswerRef.current = fullAnswer;
       setCurrentAnswer(fullAnswer);
     };
@@ -355,6 +354,7 @@ export default function LiveInterviewPage() {
       // Fetch next question
       await fetchNextQuestion(lastAnswerRef.current);
       lastAnswerRef.current = "";
+      accumulatedFinalRef.current = "";
     }
   };
 
