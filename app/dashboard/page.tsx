@@ -1,28 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import useSWR from "swr";
 import { Button } from "@heroui/button";
+import { Spinner } from "@heroui/spinner";
 import { useAuthStore } from "@/store/authStore";
 import {
-  DashboardNavbar,
-  DashboardStatCard,
-  QuickActions,
-  DashboardSkeleton,
-  WelcomeSection,
-  PerformanceChart,
-  SkillsRadarChart,
-  FillerWordsChart,
-  SkillsComparisonChart,
-  CareerReadinessCard,
-  RecentActivityCard,
-  DashboardCTA,
+  SaaSKpiCard,
+  SaaSProgressTracker,
+  SaaSActivityFeed,
+  SaaSDashboardSidebar,
+  SaaSDashboardTopbar,
   MicrophoneIcon,
   TargetIcon,
   AwardIcon,
-  ResumeIcon,
   ChartIcon,
 } from "@/components";
+import { signOut } from "firebase/auth";
+import { auth } from "@/config/firebase";
+
+const SaaSAnalyticsPanel = dynamic(
+  () => import("@/components/dashboard/SaaSAnalyticsPanel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[340px] items-center justify-center rounded-2xl border border-divider bg-content1/80">
+        <Spinner label="Loading charts" color="primary" />
+      </div>
+    ),
+  }
+);
 
 // Types
 interface DashboardData {
@@ -60,16 +69,33 @@ interface Activity {
   title: string;
   score?: number;
   status: string;
-  date: string;
+  createdAt: string;
 }
+
+const fetcher = async ([url, firebaseUid]: [string, string]) => {
+  const response = await fetch(url, {
+    headers: { firebaseUid },
+  });
+
+  if (!response.ok) {
+    const fallback = `Failed to fetch ${url}`;
+    let message = fallback;
+    try {
+      const json = await response.json();
+      message = json?.error || fallback;
+    } catch {
+      message = fallback;
+    }
+    throw new Error(message);
+  }
+
+  return response.json();
+};
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuthStore();
   const router = useRouter();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -78,121 +104,111 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  // Fetch dashboard data
-  useEffect(() => {
-    if (!user) return;
+  const { data: dashboardData, error: dashboardError, isLoading: dashboardLoading } =
+    useSWR<DashboardData>(user ? ["/api/dashboard", user.uid] : null, fetcher, {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+    });
 
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
+  const { data: resumesJson, error: resumeError, isLoading: resumeLoading } = useSWR<{
+    resumes: ResumeData[];
+  }>(user ? ["/api/resume/list", user.uid] : null, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
 
-        const headers = {
-          firebaseUid: user.uid,
-        };
-
-        // Fetch all data in parallel
-        const [dashboardRes, resumesRes, interviewsRes] = await Promise.all([
-          fetch("/api/dashboard", { headers }),
-          fetch("/api/resume/list", { headers }),
-          fetch("/api/interviews/list", { headers }),
-        ]);
-
-        if (!dashboardRes.ok) throw new Error("Failed to fetch dashboard data");
-
-        const dashboardJson = await dashboardRes.json();
-        setDashboardData(dashboardJson);
-
-        // Process recent activities
-        const activities: Activity[] = [];
-
-        if (resumesRes.ok) {
-          const resumesJson = await resumesRes.json();
-          const resumes: ResumeData[] = resumesJson.resumes || [];
-
-          resumes.forEach((resume) => {
-            activities.push({
-              id: resume._id,
-              type: "resume",
-              title: resume.targetRole || resume.fileName || "Resume",
-              score: resume.atsScore,
-              status: "completed",
-              date: new Date(resume.createdAt).toLocaleDateString(),
-            });
-          });
-        }
-
-        if (interviewsRes.ok) {
-          const interviewsJson = await interviewsRes.json();
-          const interviews: InterviewData[] = interviewsJson.interviews || [];
-
-          interviews.forEach((interview) => {
-            activities.push({
-              id: interview._id,
-              type: "interview",
-              title: interview.targetRole || "Mock Interview",
-              score: interview.overallScore,
-              status: interview.status === "completed" ? "completed" : "in-progress",
-              date: new Date(interview.createdAt).toLocaleDateString(),
-            });
-          });
-        }
-
-        // Sort by date and take recent 5
-        activities.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setRecentActivities(activities.slice(0, 5));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      } finally {
-        setLoading(false);
+  const { data: interviewsJson, error: interviewError, isLoading: interviewLoading } =
+    useSWR<{ interviews: InterviewData[] }>(
+      user ? ["/api/interviews/list", user.uid] : null,
+      fetcher,
+      {
+        revalidateOnFocus: false,
+        dedupingInterval: 30000,
       }
-    };
+    );
 
-    fetchDashboardData();
-  }, [user]);
-
-  // Quick actions configuration
-  const quickActions = [
-    {
-      title: "Start Interview",
-      description: "Practice with AI-powered mock interviews",
-      icon: <MicrophoneIcon size={24} />,
-      href: "/interviews/setup",
-      color: "from-primary to-blue-600",
-    },
-    {
-      title: "Analyze Resume",
-      description: "Get instant ATS score and suggestions",
-      icon: <ResumeIcon size={24} />,
-      href: "/resume-analyzer",
-      color: "from-secondary to-pink-600",
-    },
-    {
-      title: "Interview History",
-      description: "Review past interviews and feedback",
-      icon: <ChartIcon size={24} />,
-      href: "/interviews/history",
-      color: "from-success to-green-600",
-    },
-    {
-      title: "Resume History",
-      description: "View all your analyzed resumes",
-      icon: <ResumeIcon size={24} />,
-      href: "/resume-analyzer/history",
-      color: "from-warning to-orange-600",
-    },
-  ];
+  const loading = dashboardLoading || resumeLoading || interviewLoading;
+  const error = dashboardError || resumeError || interviewError;
 
   // Get user display name
   const userName = user?.displayName || user?.email?.split("@")[0] || "User";
+  const userEmail = user?.email || "user@example.com";
+
+  const interviews = interviewsJson?.interviews || [];
+  const resumes = resumesJson?.resumes || [];
+
+  const completionRate = useMemo(() => {
+    if (!interviews.length) return 0;
+    const completed = interviews.filter((item) => item.status === "completed").length;
+    return Math.round((completed / interviews.length) * 100);
+  }, [interviews]);
+
+  const totalTests = (dashboardData?.totalInterviews || 0) + (dashboardData?.totalResumes || 0);
+
+  const recentActivities = useMemo<Activity[]>(() => {
+    const activities: Activity[] = [];
+
+    resumes.forEach((resume) => {
+      activities.push({
+        id: resume._id,
+        type: "resume",
+        title: resume.targetRole || resume.fileName || "Resume",
+        score: resume.atsScore,
+        status: "completed",
+        createdAt: resume.createdAt,
+      });
+    });
+
+    interviews.forEach((interview) => {
+      activities.push({
+        id: interview._id,
+        type: "interview",
+        title: interview.targetRole || "Mock Interview",
+        score: interview.overallScore,
+        status: interview.status === "completed" ? "completed" : "in-progress",
+        createdAt: interview.createdAt,
+      });
+    });
+
+    return activities
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 8);
+  }, [interviews, resumes]);
+
+  const progressItems = useMemo(
+    () => [
+      {
+        id: "interview-score",
+        label: "Interview mastery",
+        value: dashboardData?.avgScore || 0,
+        target: 85,
+      },
+      {
+        id: "ats-readiness",
+        label: "ATS readiness",
+        value: dashboardData?.avgAtsScore || 0,
+        target: 80,
+      },
+      {
+        id: "completion",
+        label: "Completion rate",
+        value: completionRate,
+        target: 90,
+      },
+    ],
+    [dashboardData?.avgAtsScore, dashboardData?.avgScore, completionRate]
+  );
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/");
+  };
 
   // Loading state with skeleton
-  if (authLoading || loading) {
+  if (authLoading || (loading && !dashboardData)) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardNavbar />
-        <DashboardSkeleton />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Spinner size="lg" color="primary" label="Preparing your dashboard" />
       </div>
     );
   }
@@ -201,8 +217,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <DashboardNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger/10 flex items-center justify-center">
               <svg
@@ -221,7 +236,7 @@ export default function DashboardPage() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
-            <p className="text-foreground/60 mb-4">{error}</p>
+            <p className="text-foreground/60 mb-4">{error.message}</p>
             <Button color="primary" className="cursor-pointer" onPress={() => window.location.reload()}>
               Try Again
             </Button>
@@ -233,87 +248,83 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardNavbar />
+      <SaaSDashboardSidebar
+        pathname={"/dashboard"}
+        isOpen={sidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        userPhotoUrl={user?.photoURL}
+        onNavigate={(href) => router.push(href)}
+        onLogout={handleLogout}
+        onCloseMobile={() => setSidebarOpen(false)}
+      />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <WelcomeSection userName={userName} />
+      <div className="lg:pl-72">
+        <SaaSDashboardTopbar
+          userName={userName}
+          userPhotoUrl={user?.photoURL}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
 
-        {/* Quick Actions */}
-        <section className="mb-8">
-          <QuickActions actions={quickActions} />
-        </section>
+        <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <SaaSKpiCard
+              label="Total Tests"
+              value={`${totalTests}`}
+              note="Interviews + resumes"
+              icon={<ChartIcon size={20} />}
+            />
+            <SaaSKpiCard
+              label="Average Score"
+              value={`${dashboardData?.avgScore || 0}%`}
+              note="Interview quality"
+              icon={<TargetIcon size={20} />}
+              trend={dashboardData?.improvementRate || 0}
+            />
+            <SaaSKpiCard
+              label="Completion Rate"
+              value={`${completionRate}%`}
+              note="Completed interview sessions"
+              icon={<MicrophoneIcon size={20} />}
+            />
+            <SaaSKpiCard
+              label="Best Score"
+              value={`${dashboardData?.bestScore || 0}%`}
+              note="Personal best"
+              icon={<AwardIcon size={20} />}
+            />
+          </section>
 
-        {/* Stats Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <DashboardStatCard
-            icon={<MicrophoneIcon size={24} className="text-primary" />}
-            label="Total Interviews"
-            value={dashboardData?.totalInterviews || 0}
-            gradient="from-primary/20 to-blue-500/20"
-            delay={0}
+          <SaaSAnalyticsPanel
+            trendData={dashboardData?.trendData || []}
+            comparisonData={dashboardData?.comparisonData || []}
+            distributionData={dashboardData?.fillerData || []}
           />
-          <DashboardStatCard
-            icon={<TargetIcon size={24} className="text-secondary" />}
-            label="Average Score"
-            value={`${dashboardData?.avgScore || 0}%`}
-            trend={
-              dashboardData?.improvementRate
-                ? {
-                    value: dashboardData.improvementRate,
-                    isPositive: dashboardData.improvementRate > 0,
-                  }
-                : undefined
-            }
-            gradient="from-secondary/20 to-pink-500/20"
-            delay={0.1}
-          />
-          <DashboardStatCard
-            icon={<AwardIcon size={24} className="text-success" />}
-            label="Best Score"
-            value={`${dashboardData?.bestScore || 0}%`}
-            gradient="from-success/20 to-green-500/20"
-            delay={0.2}
-          />
-          <DashboardStatCard
-            icon={<ResumeIcon size={24} className="text-warning" />}
-            label="ATS Score"
-            value={`${dashboardData?.avgAtsScore || 0}%`}
-            gradient="from-warning/20 to-orange-500/20"
-            delay={0.3}
-          />
-        </section>
 
-        {/* Main Content Grid - Performance & Career Readiness */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <PerformanceChart data={dashboardData?.trendData} delay={0.4} />
-          <CareerReadinessCard
-            avgScore={dashboardData?.avgScore || 0}
-            avgAtsScore={dashboardData?.avgAtsScore || 0}
-            improvementRate={dashboardData?.improvementRate || 0}
-            delay={0.5}
-          />
-        </div>
+          <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <SaaSProgressTracker items={progressItems} />
+            <SaaSActivityFeed
+              activities={recentActivities}
+              onViewAll={() => router.push("/interviews/history")}
+            />
+          </section>
 
-        {/* Skills & Activity Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <SkillsRadarChart data={dashboardData?.radarData} delay={0.6} />
-          <RecentActivityCard
-            activities={recentActivities}
-            onViewAll={() => router.push("/interviews/history")}
-            delay={0.7}
-          />
-        </div>
-
-        {/* Charts Row - Filler Words & Skills Comparison */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <FillerWordsChart data={dashboardData?.fillerData} delay={0.8} />
-          <SkillsComparisonChart data={dashboardData?.comparisonData} delay={0.9} />
-        </div>
-
-        {/* Call to Action */}
-        <DashboardCTA delay={1} />
-      </main>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Button color="primary" className="h-14" onPress={() => router.push("/interviews/setup")}>
+              Start Mock Interview
+            </Button>
+            <Button variant="flat" className="h-14" onPress={() => router.push("/resume-analyzer")}>
+              Analyze Resume
+            </Button>
+            <Button variant="flat" className="h-14" onPress={() => router.push("/interviews/history")}>
+              Interview History
+            </Button>
+            <Button variant="flat" className="h-14" onPress={() => router.push("/resume-analyzer/history")}>
+              Resume History
+            </Button>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }
