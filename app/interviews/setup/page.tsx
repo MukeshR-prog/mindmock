@@ -289,33 +289,45 @@ export default function InterviewSetupPage() {
 
   // ── Resume reference recovery ───────────────────────────────────────────
   // Reads ?resumeId from the URL using window.location.search (client-side only).
-  // 1. If Zustand already has the resume → just switch the tab.
-  // 2. If Zustand is empty (e.g. page refresh) → fetch the resume from the API.
+  // window is guaranteed to exist inside useEffect — never called during SSR.
+  //
+  // Scenarios handled:
+  //  A) Zustand store has the SAME resume as the URL  → just switch tab (no fetch)
+  //  B) Zustand store has a DIFFERENT resume (stale)  → fetch correct one by ID
+  //  C) Zustand store is empty (e.g. page refresh)    → fetch by ID and restore
+  //  D) No resumeId in URL at all                     → stay on Concept tab
   useEffect(() => {
-    // window is only available client-side — safe inside useEffect
     const resumeIdFromUrl = new URLSearchParams(window.location.search).get("resumeId");
 
-    if (selectedResume) {
-      // Resume already in store — just flip to the resume tab
+    // Case D — no resume param, nothing to do
+    if (!resumeIdFromUrl) {
+      if (selectedResume) setInterviewMode("resume");
+      return;
+    }
+
+    // Case A — store already has the exact resume the URL refers to
+    if (selectedResume && selectedResume._id === resumeIdFromUrl) {
       setInterviewMode("resume");
       return;
     }
 
-    if (!resumeIdFromUrl || !user) return;
+    // Cases B & C — fetch the specific resume by ID (efficient single-document fetch)
+    if (!user) return;
 
-    // Fetch the specific resume from the list and restore it in the store
     const restoreResume = async () => {
       try {
-        const res = await fetch("/api/resume/list", {
+        const res = await fetch(`/api/resume/${resumeIdFromUrl}`, {
           headers: { firebaseUid: user.uid },
         });
-        const data = await res.json();
-        const resumes: any[] = data.resumes || [];
-        const found = resumes.find((r: any) => r._id === resumeIdFromUrl);
-        if (found) {
-          setSelectedResume(found);
-          setInterviewMode("resume");
+
+        if (!res.ok) {
+          console.error("Resume not found for id:", resumeIdFromUrl);
+          return;
         }
+
+        const found = await res.json();
+        setSelectedResume(found);
+        setInterviewMode("resume");
       } catch (err) {
         console.error("Failed to restore resume from URL param:", err);
       }

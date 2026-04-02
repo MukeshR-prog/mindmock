@@ -21,6 +21,7 @@
 | 9 | [`/api/interviews/end`](#9-post-apiinterviewsend) | POST | End interview & compute final score |
 | 10 | [`/api/resume/analyze`](#10-post-apiresumesanalyze) | POST | Upload & analyze a resume (ATS) |
 | 11 | [`/api/resume/list`](#11-get-apiresumelists) | GET | List all resumes for a user |
+| 12 | [`/api/resume/[id]`](#12-get-apiresumeid) | GET | Get a single resume by ID |
 
 ---
 
@@ -681,6 +682,7 @@ Also performs local filler word detection. Saves the result to the interview doc
 
 ```json
 {
+  "_id": "64xyz...",
   "atsScore": 74,
   "detectedRole": "Frontend Developer",
   "detailedScores": {
@@ -811,6 +813,51 @@ Also performs local filler word detection. Saves the result to the interview doc
 
 ```json
 { "resumes": [], "error": "Failed to fetch resumes" }
+```
+
+---
+
+### 12. GET `/api/resume/[id]`
+
+**Description:** Fetches a single resume document by its MongoDB ObjectId. Used by the interview setup page to restore a resume reference from a URL param (`?resumeId=`) without downloading the full list.
+
+#### Request
+
+**URL Params:**
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | `string` | ✅ Yes | MongoDB ObjectId of the resume |
+
+**Headers:** None required.
+
+#### Responses
+
+**`200 OK`:**
+
+```json
+{
+  "_id": "64xyz...",
+  "fileName": "john_doe_resume.pdf",
+  "targetRole": "Frontend Developer",
+  "experienceLevel": "mid",
+  "atsScore": 74,
+  "matchedKeywords": ["React", "TypeScript", "Node.js"],
+  "missingKeywords": ["GraphQL", "Docker"],
+  "createdAt": "2025-03-10T10:00:00.000Z"
+}
+```
+
+**`404 Not Found`:**
+
+```json
+{ "error": "Resume not found" }
+```
+
+**`500 Internal Server Error`:**
+
+```json
+{ "error": "Failed to fetch resume" }
 ```
 
 ---
