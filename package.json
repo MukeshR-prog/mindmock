@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint --fix"
+    "lint": "eslint --fix",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@heroui/accordion": "2.2.26",
@@ -72,6 +74,7 @@
     "@next/eslint-plugin-next": "15.5.9",
     "@react-types/shared": "3.32.1",
     "@tailwindcss/postcss": "4.1.11",
+    "@types/jest": "^30.0.0",
     "@types/node": "20.5.7",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "18.3.3",
@@ -89,10 +92,13 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-unused-imports": "4.1.4",
     "globals": "16.0.0",
+    "jest": "^30.3.0",
+    "jest-environment-node": "^30.3.0",
     "postcss": "8.5.6",
     "prettier": "3.5.3",
     "tailwind-variants": "3.2.2",
     "tailwindcss": "4.1.11",
+    "ts-jest": "^29.4.9",
     "typescript": "5.6.3"
   }
 }
