@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { useResumeStore } from "@/store/resumeStore";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input, Textarea } from "@heroui/input";
@@ -22,6 +23,7 @@ import {
 
 export default function ResumeAnalyzerPage() {
   const { user, loading: authLoading } = useAuthStore();
+  const { setSelectedResume } = useResumeStore();
   const router = useRouter();
 
   const [file, setFile] = useState<File | null>(null);
@@ -80,6 +82,22 @@ export default function ResumeAnalyzerPage() {
 
     const data = await res.json();
     setResult(data);
+
+    // If the API returned the saved resume's _id, store it in Zustand
+    // so the setup page can pre-select it automatically.
+    if (data._id) {
+      setSelectedResume({
+        _id: data._id,
+        fileName: file?.name || "Uploaded Resume",
+        targetRole: role === "custom" ? customRole : role,
+        experienceLevel: experience,
+        atsScore: data.atsScore ?? 0,
+        matchedKeywords: data.matchedKeywords ?? [],
+        missingKeywords: data.missingKeywords ?? [],
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     setLoading(false);
   };
 
@@ -392,7 +410,16 @@ export default function ResumeAnalyzerPage() {
                         color="primary"
                         variant="flat"
                         className="cursor-pointer"
-                        onPress={() => router.push("/interviews/setup")}
+                        onPress={() => {
+                          // Pass resumeId in URL so setup page auto-selects the
+                          // resume and switches to Resume-Based tab
+                          const resumeId = result?._id;
+                          router.push(
+                            resumeId
+                              ? `/interviews/setup?resumeId=${resumeId}`
+                              : "/interviews/setup"
+                          );
+                        }}
                       >
                         Start Mock Interview
                       </Button>

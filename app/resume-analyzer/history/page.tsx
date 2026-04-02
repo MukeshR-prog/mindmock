@@ -116,7 +116,9 @@ export default function ResumeHistoryPage() {
 
   const handleSelectResume = (resume: ResumeItem) => {
     setSelectedResume(resume);
-    router.push("/interviews/setup");
+    // Pass resumeId as a query param so the setup page can recover
+    // the resume reference even if the Zustand store is cleared (e.g. refresh)
+    router.push(`/interviews/setup?resumeId=${resume._id}`);
   };
 
   if (authLoading || loading) {

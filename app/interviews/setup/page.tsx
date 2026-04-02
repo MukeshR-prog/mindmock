@@ -112,6 +112,7 @@ export default function InterviewSetupPage() {
   const { user, loading: authLoading } = useAuthStore();
 
   // Interview mode: "resume" or "concept"
+  // Default to "concept"; auto-switch to "resume" when a resume is available
   const [interviewMode, setInterviewMode] = useState<string>("concept");
   
   // Common settings
@@ -285,6 +286,56 @@ export default function InterviewSetupPage() {
       router.push("/login");
     }
   }, [user, authLoading, router]);
+
+  // ── Resume reference recovery ───────────────────────────────────────────
+  // Reads ?resumeId from the URL using window.location.search (client-side only).
+  // window is guaranteed to exist inside useEffect — never called during SSR.
+  //
+  // Scenarios handled:
+  //  A) Zustand store has the SAME resume as the URL  → just switch tab (no fetch)
+  //  B) Zustand store has a DIFFERENT resume (stale)  → fetch correct one by ID
+  //  C) Zustand store is empty (e.g. page refresh)    → fetch by ID and restore
+  //  D) No resumeId in URL at all                     → stay on Concept tab
+  useEffect(() => {
+    const resumeIdFromUrl = new URLSearchParams(window.location.search).get("resumeId");
+
+    // Case D — no resume param, nothing to do
+    if (!resumeIdFromUrl) {
+      if (selectedResume) setInterviewMode("resume");
+      return;
+    }
+
+    // Case A — store already has the exact resume the URL refers to
+    if (selectedResume && selectedResume._id === resumeIdFromUrl) {
+      setInterviewMode("resume");
+      return;
+    }
+
+    // Cases B & C — fetch the specific resume by ID (efficient single-document fetch)
+    if (!user) return;
+
+    const restoreResume = async () => {
+      try {
+        const res = await fetch(`/api/resume/${resumeIdFromUrl}`, {
+          headers: { firebaseUid: user.uid },
+        });
+
+        if (!res.ok) {
+          console.error("Resume not found for id:", resumeIdFromUrl);
+          return;
+        }
+
+        const found = await res.json();
+        setSelectedResume(found);
+        setInterviewMode("resume");
+      } catch (err) {
+        console.error("Failed to restore resume from URL param:", err);
+      }
+    };
+
+    restoreResume();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // Preload voices for preview
   useEffect(() => {
