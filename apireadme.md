@@ -1,6 +1,6 @@
 # MindMock API Documentation
 
-> **Base URL:** `http://localhost:3000/api`  
+> **Base URL:** `http://mindmock.vercel.app/api`  
 > **Authentication:** All protected routes require the `firebaseUid` header.  
 > **Content-Type:** `application/json` (unless stated otherwise)
 
