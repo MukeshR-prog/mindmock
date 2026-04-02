@@ -1,9 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Textarea, Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -110,7 +108,6 @@ const voiceTypes = [
 
 export default function InterviewSetupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { selectedResume, setSelectedResume } = useResumeStore();
   const { user, loading: authLoading } = useAuthStore();
 
@@ -291,11 +288,12 @@ export default function InterviewSetupPage() {
   }, [user, authLoading, router]);
 
   // ── Resume reference recovery ───────────────────────────────────────────
-  // If navigated from Resume History the resumeId is in the URL query param.
+  // Reads ?resumeId from the URL using window.location.search (client-side only).
   // 1. If Zustand already has the resume → just switch the tab.
   // 2. If Zustand is empty (e.g. page refresh) → fetch the resume from the API.
   useEffect(() => {
-    const resumeIdFromUrl = searchParams.get("resumeId");
+    // window is only available client-side — safe inside useEffect
+    const resumeIdFromUrl = new URLSearchParams(window.location.search).get("resumeId");
 
     if (selectedResume) {
       // Resume already in store — just flip to the resume tab
@@ -325,7 +323,7 @@ export default function InterviewSetupPage() {
 
     restoreResume();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, searchParams]);
+  }, [user]);
 
   // Preload voices for preview
   useEffect(() => {
