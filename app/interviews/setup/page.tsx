@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Textarea, Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -108,10 +108,12 @@ const voiceTypes = [
 
 export default function InterviewSetupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { selectedResume, setSelectedResume } = useResumeStore();
   const { user, loading: authLoading } = useAuthStore();
 
   // Interview mode: "resume" or "concept"
+  // Default to "concept"; auto-switch to "resume" when a resume is available
   const [interviewMode, setInterviewMode] = useState<string>("concept");
   
   // Common settings
@@ -285,6 +287,43 @@ export default function InterviewSetupPage() {
       router.push("/login");
     }
   }, [user, authLoading, router]);
+
+  // ── Resume reference recovery ───────────────────────────────────────────
+  // If navigated from Resume History the resumeId is in the URL query param.
+  // 1. If Zustand already has the resume → just switch the tab.
+  // 2. If Zustand is empty (e.g. page refresh) → fetch the resume from the API.
+  useEffect(() => {
+    const resumeIdFromUrl = searchParams.get("resumeId");
+
+    if (selectedResume) {
+      // Resume already in store — just flip to the resume tab
+      setInterviewMode("resume");
+      return;
+    }
+
+    if (!resumeIdFromUrl || !user) return;
+
+    // Fetch the specific resume from the list and restore it in the store
+    const restoreResume = async () => {
+      try {
+        const res = await fetch("/api/resume/list", {
+          headers: { firebaseUid: user.uid },
+        });
+        const data = await res.json();
+        const resumes: any[] = data.resumes || [];
+        const found = resumes.find((r: any) => r._id === resumeIdFromUrl);
+        if (found) {
+          setSelectedResume(found);
+          setInterviewMode("resume");
+        }
+      } catch (err) {
+        console.error("Failed to restore resume from URL param:", err);
+      }
+    };
+
+    restoreResume();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, searchParams]);
 
   // Preload voices for preview
   useEffect(() => {

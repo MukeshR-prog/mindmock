@@ -167,6 +167,7 @@ if (!targetRole || !experienceLevel) {
     await updateUserAtsStats(user._id);
 
     return NextResponse.json({
+      _id: resume._id,           // ← returned so the frontend can pass resumeId to /interviews/setup
       atsScore: atsResult.atsScore,
       detectedRole: atsResult.detectedRole,
       detailedScores: atsResult.detailedScores,
