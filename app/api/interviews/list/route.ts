@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import Interview from "@/models/Interview";
 import User from "@/models/User";
+import { normalizeOverallScore } from "@/utils/scoreCalculator";
 
 export async function GET(req: Request) {
   try {
@@ -27,7 +28,9 @@ export async function GET(req: Request) {
       createdAt: interview.createdAt || new Date().toISOString(),
       status: interview.status || "created",
       targetRole: interview.targetRole || "General Interview",
-      overallScore: interview.overallScore ? Math.max(0, Math.min(100, interview.overallScore)) : null,
+      overallScore: interview.overallScore !== undefined && interview.overallScore !== null
+        ? normalizeOverallScore(interview.overallScore)
+        : null,
       interviewType: interview.interviewType || "mixed",
       difficulty: interview.difficulty || "junior",
     }));
