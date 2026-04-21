@@ -3,6 +3,7 @@ import { connectDB } from "@/config/mongodb";
 import Interview from "@/models/Interview";
 import Resume from "@/models/Resume";
 import User from "@/models/User";
+import { normalizeOverallScore } from "@/utils/scoreCalculator";
 
 function clampPercentage(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -103,10 +104,20 @@ export async function GET(req: Request) {
     .lean();
 
   // Generate chart data from interviews
+  const normalizedScores = interviews.map((i: any) => normalizeOverallScore(i.overallScore));
+
   const trendData = interviews.map((i: any, idx: number) => ({
     name: `I${idx + 1}`,
-    score: i.overallScore || 0,
+    score: normalizedScores[idx] || 0,
   }));
+
+  const computedAvgScore = normalizedScores.length
+    ? Math.round(normalizedScores.reduce((sum, value) => sum + value, 0) / normalizedScores.length)
+    : 0;
+
+  const computedBestScore = normalizedScores.length
+    ? Math.max(...normalizedScores)
+    : 0;
 
   // Build skill scores from actual interview answers to avoid stale cached values.
   const userSkillAverages = calculateSkillAverages(interviews);
@@ -161,8 +172,8 @@ export async function GET(req: Request) {
   return NextResponse.json({
     // Stats from DB
     totalInterviews: totalInterviews || 0,
-    avgScore: avgScore || 0,
-    bestScore: bestScore || 0,
+    avgScore: computedAvgScore || avgScore || 0,
+    bestScore: computedBestScore || bestScore || 0,
     improvementRate: improvementRate || 0,
     avgAtsScore: avgAtsScore || 0,
     totalResumes: totalResumes || 0,

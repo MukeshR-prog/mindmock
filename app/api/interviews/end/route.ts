@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/config/mongodb";
 import Interview from "@/models/Interview";
 import User from "@/models/User";
-import { calculateOverallScore } from "@/utils/scoreCalculator";
+import { calculateOverallScore, normalizeOverallScore } from "@/utils/scoreCalculator";
 
 export async function POST(req: Request) {
   try {
@@ -51,7 +51,7 @@ async function updateUserStats(userId: string) {
   if (!interviews.length) return;
 
   // Calculate overall stats
-  const scores = interviews.map((i: any) => i.overallScore || 0);
+  const scores = interviews.map((i: any) => normalizeOverallScore(i.overallScore));
   const totalInterviews = interviews.length;
   const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   const bestScore = Math.max(...scores);
