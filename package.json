@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --fix",
@@ -53,6 +53,7 @@
     "@heroui/user": "2.2.24",
     "@react-aria/ssr": "3.9.10",
     "@react-aria/visually-hidden": "3.8.29",
+    "antigravity": "^0.0.0",
     "clsx": "2.1.1",
     "dotenv": "^17.2.3",
     "firebase": "^12.7.0",
