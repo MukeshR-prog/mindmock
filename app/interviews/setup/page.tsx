@@ -896,17 +896,18 @@ export default function InterviewSetupPage() {
                                   <div className="text-center">
                                     <CameraIcon size={32} className="mx-auto mb-2 text-foreground/40" />
                                     <p className="text-xs text-danger mb-2">{cameraError}</p>
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                      <Button
-                                        size="sm"
-                                        variant="flat"
-                                        color="success"
-                                        className="cursor-pointer"
-                                        onPress={() => initializeCamera()}
-                                      >
-                                        Try Again
-                                      </Button>
-                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="flat"
+                                      color="success"
+                                      className="cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        initializeCamera();
+                                      }}
+                                    >
+                                      Try Again
+                                    </Button>
                                   </div>
                                 </div>
                               )}
@@ -933,7 +934,7 @@ export default function InterviewSetupPage() {
                               )}
                             </div>
                             <p className="text-xs text-foreground/50 text-center mt-2">
-                              Preview: This is how you'll appear during the interview
+                              Preview: This is how you&apos;ll appear during the interview
                             </p>
                           </div>
                         </motion.div>
