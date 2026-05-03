@@ -88,11 +88,12 @@ export async function GET(req: Request) {
     avgStarScore,
   } = user;
 
-  // Get interviews for chart data
+  // Get interviews for chart data (projecting only required fields, excluding large transcript/answers text)
   const interviews = await Interview.find({
     userId: user._id,
     status: "completed",
   })
+    .select("overallScore createdAt answers.relevanceScore answers.confidenceScore answers.starScore answers.fillerWords")
     .sort({ createdAt: 1 })
     .lean();
 

@@ -53,5 +53,9 @@ const InterviewSchema = new Schema(
   { timestamps: true }
 );
 
+// Optimize query performance for dashboard user queries and global aggregations
+InterviewSchema.index({ userId: 1, status: 1, createdAt: 1 });
+InterviewSchema.index({ status: 1, userId: 1 });
+
 export default models.Interview ||
   mongoose.model("Interview", InterviewSchema);
