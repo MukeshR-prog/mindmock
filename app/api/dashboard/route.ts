@@ -104,24 +104,58 @@ export async function GET(req: Request) {
     .select("answers")
     .lean();
 
-  // Generate chart data from interviews
-  const normalizedScores = interviews.map((i: any) => normalizeOverallScore(i.overallScore));
+  // Generate user stats, trend data, and count filler words in a single optimized pass
+  let overallScoreSum = 0;
+  let computedBestScore = 0;
+  const trendData: any[] = [];
+  
+  let relevanceTotal = 0;
+  let confidenceTotal = 0;
+  let starTotal = 0;
+  let totalAnswers = 0;
+  
+  const fillerCount: Record<string, number> = {};
 
-  const trendData = interviews.map((i: any, idx: number) => ({
-    name: `I${idx + 1}`,
-    score: normalizedScores[idx] || 0,
-  }));
+  interviews.forEach((interview, idx) => {
+    // 1. Overall & Trend score
+    const normScore = normalizeOverallScore(interview.overallScore);
+    overallScoreSum += normScore;
+    if (normScore > computedBestScore) {
+      computedBestScore = normScore;
+    }
+    trendData.push({
+      name: `I${idx + 1}`,
+      score: normScore || 0,
+    });
 
-  const computedAvgScore = normalizedScores.length
-    ? Math.round(normalizedScores.reduce((sum, value) => sum + value, 0) / normalizedScores.length)
+    // 2. Answers-based stats: Skill Averages and Filler words
+    interview.answers?.forEach((answer: any) => {
+      relevanceTotal += answer.relevanceScore || 0;
+      confidenceTotal += answer.confidenceScore || 0;
+      starTotal += answer.starScore || 0;
+      totalAnswers += 1;
+
+      answer.fillerWords?.forEach((word: string) => {
+        fillerCount[word] = (fillerCount[word] || 0) + 1;
+      });
+    });
+  });
+
+  const computedAvgScore = interviews.length
+    ? Math.round(overallScoreSum / interviews.length)
     : 0;
 
-  const computedBestScore = normalizedScores.length
-    ? Math.max(...normalizedScores)
-    : 0;
+  const userSkillAverages = totalAnswers ? {
+    relevance: clampPercentage((relevanceTotal / totalAnswers) * 10),
+    confidence: clampPercentage((confidenceTotal / totalAnswers) * 10),
+    star: clampPercentage((starTotal / totalAnswers) * 10),
+  } : {
+    relevance: 0,
+    confidence: 0,
+    star: 0,
+  };
 
-  // Build skill scores from actual interview answers to avoid stale cached values.
-  const userSkillAverages = calculateSkillAverages(interviews);
+  // Build peer averages (refactored in next task)
   const peerSkillAverages = calculateSkillAverages(peerInterviews);
 
   // Use calculated scores if available, otherwise fall back to user stats
@@ -141,17 +175,8 @@ export async function GET(req: Request) {
     { skill: "STAR", score: starScore },
   ];
 
-  // Filler words pie chart - only if we have data
-  const fillerCount: Record<string, number> = {};
+  // Colors config for filler words pie chart
   const FILLER_COLORS = ["#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444"];
-  
-  interviews.forEach((i: any) => {
-    i.answers?.forEach((a: any) => {
-      a.fillerWords?.forEach((w: string) => {
-        fillerCount[w] = (fillerCount[w] || 0) + 1;
-      });
-    });
-  });
 
   const fillerData = Object.keys(fillerCount).length > 0
     ? Object.keys(fillerCount)
