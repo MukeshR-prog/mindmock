@@ -9,35 +9,6 @@ function clampPercentage(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function calculateSkillAverages(interviews: any[]) {
-  let relevanceTotal = 0;
-  let confidenceTotal = 0;
-  let starTotal = 0;
-  let answerCount = 0;
-
-  interviews.forEach((interview) => {
-    interview.answers?.forEach((answer: any) => {
-      relevanceTotal += answer.relevanceScore || 0;
-      confidenceTotal += answer.confidenceScore || 0;
-      starTotal += answer.starScore || 0;
-      answerCount += 1;
-    });
-  });
-
-  if (!answerCount) {
-    return {
-      relevance: 0,
-      confidence: 0,
-      star: 0,
-    };
-  }
-
-  return {
-    relevance: clampPercentage((relevanceTotal / answerCount) * 10),
-    confidence: clampPercentage((confidenceTotal / answerCount) * 10),
-    star: clampPercentage((starTotal / answerCount) * 10),
-  };
-}
 
 export async function GET(req: Request) {
   try {
@@ -97,12 +68,6 @@ export async function GET(req: Request) {
     .sort({ createdAt: 1 })
     .lean();
 
-  const peerInterviews = await Interview.find({
-    userId: { $ne: user._id },
-    status: "completed",
-  })
-    .select("answers")
-    .lean();
 
   // Generate user stats, trend data, and count filler words in a single optimized pass
   let overallScoreSum = 0;
@@ -155,8 +120,39 @@ export async function GET(req: Request) {
     star: 0,
   };
 
-  // Build peer averages (refactored in next task)
-  const peerSkillAverages = calculateSkillAverages(peerInterviews);
+  // Compute peer averages directly in the database using aggregation to prevent out-of-memory overhead
+  const peerAveragesResult = await Interview.aggregate([
+    {
+      $match: {
+        userId: { $ne: user._id },
+        status: "completed",
+      },
+    },
+    {
+      $unwind: "$answers",
+    },
+    {
+      $group: {
+        _id: null,
+        relevanceSum: { $sum: "$answers.relevanceScore" },
+        confidenceSum: { $sum: "$answers.confidenceScore" },
+        starSum: { $sum: "$answers.starScore" },
+        answerCount: { $sum: 1 },
+      },
+    },
+  ]);
+
+  let peerSkillAverages = { relevance: 0, confidence: 0, star: 0 };
+  if (peerAveragesResult.length > 0) {
+    const { relevanceSum, confidenceSum, starSum, answerCount } = peerAveragesResult[0];
+    if (answerCount > 0) {
+      peerSkillAverages = {
+        relevance: clampPercentage((relevanceSum / answerCount) * 10),
+        confidence: clampPercentage((confidenceSum / answerCount) * 10),
+        star: clampPercentage((starSum / answerCount) * 10),
+      };
+    }
+  }
 
   // Use calculated scores if available, otherwise fall back to user stats
   const relevanceScore = userSkillAverages.relevance > 0 ? userSkillAverages.relevance : clampPercentage(avgRelevance || 0);
