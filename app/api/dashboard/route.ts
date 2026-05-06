@@ -9,6 +9,10 @@ function clampPercentage(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+// In-memory cache for global peer averages (5-minute TTL) to minimize redundant aggregation runs
+let cachedPeerAverages: { relevance: number; confidence: number; star: number } | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export async function GET(req: Request) {
   try {
@@ -120,38 +124,47 @@ export async function GET(req: Request) {
     star: 0,
   };
 
-  // Compute peer averages directly in the database using aggregation to prevent out-of-memory overhead
-  const peerAveragesResult = await Interview.aggregate([
-    {
-      $match: {
-        userId: { $ne: user._id },
-        status: "completed",
-      },
-    },
-    {
-      $unwind: "$answers",
-    },
-    {
-      $group: {
-        _id: null,
-        relevanceSum: { $sum: "$answers.relevanceScore" },
-        confidenceSum: { $sum: "$answers.confidenceScore" },
-        starSum: { $sum: "$answers.starScore" },
-        answerCount: { $sum: 1 },
-      },
-    },
-  ]);
-
+  // Compute peer averages using aggregation, with in-memory caching to avoid database scans on every request
   let peerSkillAverages = { relevance: 0, confidence: 0, star: 0 };
-  if (peerAveragesResult.length > 0) {
-    const { relevanceSum, confidenceSum, starSum, answerCount } = peerAveragesResult[0];
-    if (answerCount > 0) {
-      peerSkillAverages = {
-        relevance: clampPercentage((relevanceSum / answerCount) * 10),
-        confidence: clampPercentage((confidenceSum / answerCount) * 10),
-        star: clampPercentage((starSum / answerCount) * 10),
-      };
+  
+  if (cachedPeerAverages && (Date.now() - cacheTimestamp < CACHE_TTL_MS)) {
+    peerSkillAverages = cachedPeerAverages;
+  } else {
+    const peerAveragesResult = await Interview.aggregate([
+      {
+        $match: {
+          userId: { $ne: user._id },
+          status: "completed",
+        },
+      },
+      {
+        $unwind: "$answers",
+      },
+      {
+        $group: {
+          _id: null,
+          relevanceSum: { $sum: "$answers.relevanceScore" },
+          confidenceSum: { $sum: "$answers.confidenceScore" },
+          starSum: { $sum: "$answers.starScore" },
+          answerCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    if (peerAveragesResult.length > 0) {
+      const { relevanceSum, confidenceSum, starSum, answerCount } = peerAveragesResult[0];
+      if (answerCount > 0) {
+        peerSkillAverages = {
+          relevance: clampPercentage((relevanceSum / answerCount) * 10),
+          confidence: clampPercentage((confidenceSum / answerCount) * 10),
+          star: clampPercentage((starSum / answerCount) * 10),
+        };
+      }
     }
+    
+    // Update cache
+    cachedPeerAverages = peerSkillAverages;
+    cacheTimestamp = Date.now();
   }
 
   // Use calculated scores if available, otherwise fall back to user stats
