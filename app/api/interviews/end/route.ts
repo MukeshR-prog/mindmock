@@ -69,21 +69,31 @@ async function updateUserStats(userId: string) {
     }
   }
 
-  // Calculate skill averages
-  let relevance = 0, confidence = 0, star = 0, totalAnswers = 0;
+  // Calculate skill averages counting only valid non-null scores
+  let relevanceTotal = 0, relevanceCount = 0;
+  let confidenceTotal = 0, confidenceCount = 0;
+  let starTotal = 0, starCount = 0;
 
   interviews.forEach((i: any) => {
     i.answers?.forEach((a: any) => {
-      relevance += a.relevanceScore || 0;
-      confidence += a.confidenceScore || 0;
-      star += a.starScore || 0;
-      totalAnswers++;
+      if (a.relevanceScore !== undefined && a.relevanceScore !== null) {
+        relevanceTotal += a.relevanceScore;
+        relevanceCount++;
+      }
+      if (a.confidenceScore !== undefined && a.confidenceScore !== null) {
+        confidenceTotal += a.confidenceScore;
+        confidenceCount++;
+      }
+      if (a.starScore !== undefined && a.starScore !== null) {
+        starTotal += a.starScore;
+        starCount++;
+      }
     });
   });
 
-  const avgRelevance = totalAnswers ? Math.round((relevance / totalAnswers) * 10) : 0;
-  const avgConfidence = totalAnswers ? Math.round((confidence / totalAnswers) * 10) : 0;
-  const avgStarScore = totalAnswers ? Math.round((star / totalAnswers) * 10) : 0;
+  const avgRelevance = relevanceCount ? Math.round((relevanceTotal / relevanceCount) * 10) : 0;
+  const avgConfidence = confidenceCount ? Math.round((confidenceTotal / confidenceCount) * 10) : 0;
+  const avgStarScore = starCount ? Math.round((starTotal / starCount) * 10) : 0;
 
   // Update user in database
   await User.findByIdAndUpdate(userId, {

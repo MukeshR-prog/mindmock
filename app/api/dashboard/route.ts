@@ -79,9 +79,11 @@ export async function GET(req: Request) {
   const trendData: any[] = [];
   
   let relevanceTotal = 0;
+  let relevanceCount = 0;
   let confidenceTotal = 0;
+  let confidenceCount = 0;
   let starTotal = 0;
-  let totalAnswers = 0;
+  let starCount = 0;
   
   const fillerCount: Record<string, number> = {};
 
@@ -99,10 +101,18 @@ export async function GET(req: Request) {
 
     // 2. Answers-based stats: Skill Averages and Filler words
     interview.answers?.forEach((answer: any) => {
-      relevanceTotal += answer.relevanceScore || 0;
-      confidenceTotal += answer.confidenceScore || 0;
-      starTotal += answer.starScore || 0;
-      totalAnswers += 1;
+      if (answer.relevanceScore !== undefined && answer.relevanceScore !== null) {
+        relevanceTotal += answer.relevanceScore;
+        relevanceCount += 1;
+      }
+      if (answer.confidenceScore !== undefined && answer.confidenceScore !== null) {
+        confidenceTotal += answer.confidenceScore;
+        confidenceCount += 1;
+      }
+      if (answer.starScore !== undefined && answer.starScore !== null) {
+        starTotal += answer.starScore;
+        starCount += 1;
+      }
 
       answer.fillerWords?.forEach((word: string) => {
         fillerCount[word] = (fillerCount[word] || 0) + 1;
@@ -114,14 +124,10 @@ export async function GET(req: Request) {
     ? Math.round(overallScoreSum / interviews.length)
     : 0;
 
-  const userSkillAverages = totalAnswers ? {
-    relevance: clampPercentage((relevanceTotal / totalAnswers) * 10),
-    confidence: clampPercentage((confidenceTotal / totalAnswers) * 10),
-    star: clampPercentage((starTotal / totalAnswers) * 10),
-  } : {
-    relevance: 0,
-    confidence: 0,
-    star: 0,
+  const userSkillAverages = {
+    relevance: relevanceCount ? clampPercentage((relevanceTotal / relevanceCount) * 10) : 0,
+    confidence: confidenceCount ? clampPercentage((confidenceTotal / confidenceCount) * 10) : 0,
+    star: starCount ? clampPercentage((starTotal / starCount) * 10) : 0,
   };
 
   // Compute peer averages using aggregation, with in-memory caching to avoid database scans on every request
@@ -143,23 +149,20 @@ export async function GET(req: Request) {
       {
         $group: {
           _id: null,
-          relevanceSum: { $sum: "$answers.relevanceScore" },
-          confidenceSum: { $sum: "$answers.confidenceScore" },
-          starSum: { $sum: "$answers.starScore" },
-          answerCount: { $sum: 1 },
+          avgRelevance: { $avg: "$answers.relevanceScore" },
+          avgConfidence: { $avg: "$answers.confidenceScore" },
+          avgStar: { $avg: "$answers.starScore" },
         },
       },
     ]);
 
     if (peerAveragesResult.length > 0) {
-      const { relevanceSum, confidenceSum, starSum, answerCount } = peerAveragesResult[0];
-      if (answerCount > 0) {
-        peerSkillAverages = {
-          relevance: clampPercentage((relevanceSum / answerCount) * 10),
-          confidence: clampPercentage((confidenceSum / answerCount) * 10),
-          star: clampPercentage((starSum / answerCount) * 10),
-        };
-      }
+      const { avgRelevance, avgConfidence, avgStar } = peerAveragesResult[0];
+      peerSkillAverages = {
+        relevance: clampPercentage((avgRelevance || 0) * 10),
+        confidence: clampPercentage((avgConfidence || 0) * 10),
+        star: clampPercentage((avgStar || 0) * 10),
+      };
     }
     
     // Update cache
